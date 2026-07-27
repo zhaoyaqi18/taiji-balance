@@ -3,3 +3,4 @@ deploy_result.json
 manifest.json
 test_*.json
 version备份/
+*.zip
