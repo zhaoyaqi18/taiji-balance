@@ -787,8 +787,11 @@ function update(dt) {
   // —— 移动：球追随指针（鼠标悬停 / 手指拖动）——
   const VMAX = 2.9 * R;
   if (input.has) {
+    // 触屏偏移：手指在球下方约 120px，避免遮挡视线
+    const touchOffY = isCoarse ? R * 0.32 : 0;
+    const targetY = input.ty - touchOffY;
     const dvx = clamp((input.tx - player.x) * 12, -VMAX, VMAX);
-    const dvy = clamp((input.ty - player.y) * 12, -VMAX, VMAX);
+    const dvy = clamp((targetY - player.y) * 12, -VMAX, VMAX);
     const k = 1 - Math.exp(-18 * dt);
     player.vx += (dvx - player.vx) * k;
     player.vy += (dvy - player.vy) * k;
