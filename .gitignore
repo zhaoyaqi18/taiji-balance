@@ -1,0 +1,5 @@
+deploy_payload*.json
+deploy_result.json
+manifest.json
+test_*.json
+version备份/
