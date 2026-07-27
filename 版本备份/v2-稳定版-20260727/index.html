@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050508">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<title>TAIJI BALANCE · 阴阳平衡球</title>
+<style>
+:root{
+  --gold:#f0c778;
+  --violet:#9d86ff;
+  --ink:#050508;
+  --dt:200px;
+  --cinnabar:#c14b32;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  height:100%;overflow:hidden;background:var(--ink);
+  overscroll-behavior:none;touch-action:none;
+  user-select:none;-webkit-user-select:none;
+  font-family:Georgia,"Times New Roman","PingFang SC","Hiragino Sans GB","Microsoft YaHei",serif;
+  color:#e8e6f0;
+}
+#cv{position:fixed;inset:0;display:block}
+
+.overlay{
+  position:fixed;inset:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:radial-gradient(ellipse at 50% 42%, rgba(20,18,34,.55), rgba(4,4,9,.9) 78%);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  transition:opacity .4s ease;padding:24px;text-align:center;
+}
+.overlay.hide{opacity:0;pointer-events:none}
+.taiji{width:86px;height:86px;animation:spin 16s linear infinite;filter:drop-shadow(0 0 18px rgba(240,199,120,.32))}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1.title{
+  font-size:32px;font-weight:400;letter-spacing:.34em;margin-left:.34em;
+  color:#f4f1e8;text-shadow:0 0 26px rgba(240,199,120,.45);
+}
+.subtitle{
+  font-family:"Kaiti SC","STKaiti","KaiTi","楷体",serif;
+  font-size:15px;letter-spacing:.5em;margin-left:.5em;color:rgba(240,199,120,.6);
+}
+.tag{font-size:12px;font-style:italic;letter-spacing:.12em;color:rgba(232,230,240,.55)}
+.btn{
+  appearance:none;border:1px solid rgba(240,199,120,.4);border-radius:999px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(240,199,120,.14),rgba(240,199,120,.05));
+  color:#f4e9d2;font-size:15px;letter-spacing:.3em;margin-left:.3em;padding:15px 46px;
+  font-family:inherit;
+  transition:transform .12s ease, box-shadow .25s ease;
+}
+.btn:active{transform:scale(.95)}
+.btn.primary{box-shadow:0 0 26px rgba(240,199,120,.22)}
+.btn.ghost{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.04);
+  color:rgba(232,230,240,.8);font-size:12px;padding:11px 26px}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.hint{font-size:12px;line-height:2.2;color:rgba(232,230,240,.5);letter-spacing:.06em;font-style:italic}
+.best-line{font-size:12px;color:rgba(240,199,120,.75);letter-spacing:.14em;min-height:1em}
+
+#hud{
+  position:fixed;left:0;right:0;top:calc(var(--dt)*0.30);z-index:5;
+  display:flex;justify-content:center;align-items:center;gap:26px;
+  pointer-events:none;font-variant-numeric:tabular-nums;
+  opacity:0;transition:opacity .5s ease;
+}
+#hud.show{opacity:1}
+#hudTime{font-size:15px;color:rgba(244,241,232,.85);letter-spacing:.12em;text-shadow:0 0 12px rgba(240,199,120,.25)}
+#hudScore{font-size:15px;color:rgba(240,199,120,.9);letter-spacing:.1em;text-shadow:0 0 12px rgba(240,199,120,.3);min-width:70px;text-align:left}
+#lives{display:flex;gap:7px}
+.life{width:9px;height:9px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #ffe9bd, var(--gold) 60%, #7a5a22);
+  box-shadow:0 0 8px rgba(240,199,120,.55);transition:opacity .3s, transform .3s}
+.life.off{opacity:.14;transform:scale(.8);box-shadow:none}
+
+#toast{
+  position:fixed;left:0;right:0;top:max(calc(var(--dt)*0.62), 42px);z-index:6;
+  text-align:center;pointer-events:none;margin:0 auto;padding:0 32px;
+  font-size:14px;font-style:italic;letter-spacing:.08em;color:rgba(244,241,232,.95);
+  text-shadow:0 0 14px rgba(157,134,255,.45), 0 1px 3px rgba(0,0,0,.8);
+  opacity:0;transform:translateY(-4px);transition:opacity .35s ease, transform .35s ease;
+}
+#toast.show{opacity:1;transform:none}
+
+#seal{
+  position:fixed;left:50%;top:33%;z-index:6;pointer-events:none;opacity:0;
+  transform:translate(-50%,-50%);
+}
+#seal.show{animation:stamp 1.7s ease forwards}
+@keyframes stamp{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(2.4) rotate(-6deg)}
+  16%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-1deg)}
+  72%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-1deg)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(.94) rotate(-1deg)}
+}
+#seal .box{
+  width:66px;height:66px;margin:0 auto;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle, rgba(193,75,50,.22), rgba(193,75,50,.05) 70%, transparent);
+}
+#seal .box img{
+  position:absolute;inset:-14%;width:128%;height:128%;pointer-events:none;
+  filter:drop-shadow(0 4px 14px rgba(193,75,50,.45));
+}
+#sealChar{
+  position:relative;
+  font-family:"Kaiti SC","STKaiti","KaiTi","楷体",serif;font-size:32px;color:#f7e9d8;
+  text-shadow:0 0 8px rgba(0,0,0,.5);
+}
+#seal .en{margin-top:9px;font-size:10px;letter-spacing:.42em;margin-left:.42em;color:rgba(240,199,120,.85);text-align:center}
+
+/* 素材装饰层 */
+.keyart{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none;
+}
+.overlay > *:not(.keyart){position:relative;z-index:1}
+
+#pauseBtn{
+  position:fixed;right:16px;bottom:max(calc(var(--dt)*0.35), 14px);z-index:7;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.05);color:rgba(232,230,240,.75);font-size:12px;
+  display:none;align-items:center;justify-content:center;cursor:pointer;
+}
+#pauseBtn.show{display:flex}
+
+.big-time{font-size:54px;font-weight:200;letter-spacing:.06em;color:#f4f1e8;
+  font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(240,199,120,.35)}
+.big-score{font-size:15px;color:rgba(240,199,120,.85);letter-spacing:.22em}
+.judge{font-family:"Kaiti SC","STKaiti","KaiTi",serif;font-size:22px;
+  letter-spacing:.4em;margin-left:.4em;color:var(--gold)}
+.judge-en{font-size:11px;font-style:italic;letter-spacing:.2em;color:rgba(232,230,240,.5)}
+.near-miss{font-size:12px;color:rgba(240,199,120,.85);letter-spacing:.12em;font-style:italic;min-height:1em}
+.cause{font-size:12px;color:rgba(232,230,240,.5);letter-spacing:.12em;font-style:italic}
+.stats{font-size:12px;color:rgba(232,230,240,.6);letter-spacing:.12em}
+.new-rec{font-size:12px;color:#0b0b12;background:linear-gradient(90deg,#ffe1a0,var(--gold));
+  padding:4px 14px;border-radius:999px;letter-spacing:.3em;margin-left:.3em;font-weight:600}
+.quote-en{
+  font-style:italic;font-size:16px;line-height:1.7;color:#efe9da;max-width:430px;
+  text-shadow:0 0 18px rgba(240,199,120,.18);
+}
+.quote-cn{
+  font-family:"Kaiti SC","STKaiti","KaiTi","楷体",serif;
+  font-size:12px;letter-spacing:.28em;color:rgba(232,230,240,.42);
+}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud">
+  <div id="lives"><span class="life"></span><span class="life"></span><span class="life"></span></div>
+  <div id="hudTime">0.0</div>
+  <div id="hudScore">0</div>
+</div>
+<div id="toast"></div>
+<div id="seal"><div class="box"><img src="assets/opt/seal_base.png" alt="" onerror="this.style.display='none'"><span id="sealChar">境</span></div><div class="en" id="sealEn">CALM</div></div>
+<button id="pauseBtn" aria-label="pause">❚❚</button>
+
+<div id="title" class="overlay">
+  <img class="keyart" src="assets/opt/title_keyart.jpg" alt="" onerror="this.style.display='none'">
+  <svg class="taiji" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#f4f1e8"/>
+    <path d="M50,1 a49,49 0 0,1 0,98 a24.5,24.5 0 0,1 0,-49 a24.5,24.5 0 0,0 0,-49 z" fill="#14121e"/>
+    <circle cx="50" cy="25.5" r="7" fill="#14121e"/>
+    <circle cx="50" cy="74.5" r="7" fill="#f4f1e8"/>
+    <circle cx="50" cy="50" r="49" fill="none" stroke="rgba(240,199,120,.5)" stroke-width="1.2"/>
+  </svg>
+  <h1 class="title">TAIJI BALANCE</h1>
+  <div class="subtitle">阴阳平衡球</div>
+  <div class="tag">One thought, two natures — everything flows.</div>
+  <button id="startBtn" class="btn primary">B E G I N</button>
+  <div class="row">
+    <button id="muteBtn" class="btn ghost">SOUND · ON</button>
+  </div>
+  <div class="hint">Same color feeds you · opposite color wounds you — 3 lives<br>
+    Your color flips without warning · stay inside the circle<br>
+    8 sparks + one tap = TAIJI time · 16 / 24 lasts longer</div>
+  <div class="best-line" id="titleBest"></div>
+</div>
+
+<div id="pauseOv" class="overlay hide">
+  <h1 class="title" style="font-size:30px">止</h1>
+  <div class="judge-en">stillness</div>
+  <button id="resumeBtn" class="btn primary">R E S U M E</button>
+  <button id="quitBtn" class="btn ghost">BACK TO TAIJI</button>
+</div>
+
+<div id="over" class="overlay hide">
+  <div class="cause" id="overCause"></div>
+  <div class="judge-en" style="margin-bottom:2px">S U R V I V E D</div>
+  <div class="big-time"><span id="overTime">0.0</span><span style="font-size:18px;opacity:.6"> s</span></div>
+  <div class="big-score" id="overScore">SCORE 0</div>
+  <div class="judge" id="overJudge"></div>
+  <div class="judge-en" id="overJudgeEn"></div>
+  <div class="near-miss" id="overNear"></div>
+  <div class="new-rec" id="overNew" style="display:none">NEW RECORD</div>
+  <div class="quote-en" id="overQuoteEn"></div>
+  <div class="quote-cn" id="overQuoteCn"></div>
+  <div class="stats" id="overStats"></div>
+  <button id="againBtn" class="btn primary">O N C E &nbsp; M O R E</button>
+  <div class="row">
+    <button id="shareBtn" class="btn ghost">SHARE</button>
+    <button id="homeBtn" class="btn ghost">HOME</button>
+  </div>
+  <div class="best-line" id="overBest"></div>
+</div>
+
+<script>
+'use strict';
+const TAU = Math.PI * 2, PI = Math.PI;
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+const rand = (a, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('en-US');
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('yyb_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('yyb_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+
+let muted       = store.get('mute', false);
+let best        = store.get('best', 0);
+let bestScore   = store.get('bestScore', 0);
+let gamesPlayed = store.get('games', 0);
+
+/* ================= 语录库 · 简单直白的阴阳智慧 ================= */
+/* [English, 中文] —— 英文为主，中文小字点睛 */
+const QUOTES = [
+  // —— 最终确定版 · 19 条 ——
+  ["You cannot stop the flip. You can hold yourself.", "你管不了翻转，但管得好自己。"],
+  ["You lost the moment you forgot your color.", "输的那一下，往往是你忘了自己是谁。"],
+  ["Take your color. Dodge the rest. Same as life.", "接住同色的，躲开异色的——做人也一样。"],
+  ["Three lives. Spend your mistakes wisely.", "三条命不多，省着点犯错。"],
+  ["The circle has edges. So does life.", "圆就那么大，越界就是坠落。"],
+  ["The best are not quick. They are still.", "最强的不是躲得快，是站得稳。"],
+  ["White turns to black, black to white. Patience.", "白久了要黑，黑久了会白——别急。"],
+  ["This round is over. The next circle is new.", "这一局结束了，下一局又是新的圆。"],
+  ["The sunset is not defeat — it is the moon's turn.", "太阳落山不是输，是轮到月亮了。"],
+  ["Without some dark within, the light cannot stand.", "心里没点黑，白也立不住。"],
+  ["Too dark to see the road. Too bright to open eyes.", "太黑看不见路，太白睁不开眼。"],
+  ["Want everything, catch nothing.", "什么都想要，就什么都接不住。"],
+  ["Empty holds. Full spills.", "空，才装得下；满，就会洒。"],
+  ["Some orbs are not yours to catch. Letting go is an answer.", "有些球注定接不住，松手也是答案。"],
+  ["Turn when it turns. Hold when it holds.", "该翻的时候翻，该守的时候守。"],
+  ["Neither black nor white wins. Balance wins.", "不是黑赢，也不是白赢，是平衡赢。"],
+  ["No score survives your last life.", "得分再高，命没了就归零。"],
+  ["One who holds balance has no weakness.", "掌握平衡的人，没有破绽。"],
+  ["True strength is not destroying the opposite — it is using it.", "无敌不是消灭对手，是让对手为你所用。"]
+];
+
+const cv = $('cv'), ctx = cv.getContext('2d');
+const elHudTime = $('hudTime'), elHudScore = $('hudScore'), elLives = $('lives'), elToast = $('toast');
+const elHud = $('hud');
+const elTitle = $('title'), elPause = $('pauseOv'), elOver = $('over');
+const elPauseBtn = $('pauseBtn');
+const elStartBtn = $('startBtn'), elMuteBtn = $('muteBtn');
+const elTitleBest = $('titleBest');
+const elResumeBtn = $('resumeBtn'), elQuitBtn = $('quitBtn');
+const elOverTime = $('overTime'), elOverScore = $('overScore'), elOverJudge = $('overJudge'), elOverJudgeEn = $('overJudgeEn'), elOverCause = $('overCause');
+const elOverNew = $('overNew'), elOverStats = $('overStats'), elOverBest = $('overBest'), elOverNear = $('overNear');
+const elQuoteEn = $('overQuoteEn'), elQuoteCn = $('overQuoteCn');
+const elAgainBtn = $('againBtn'), elShareBtn = $('shareBtn'), elHomeBtn = $('homeBtn');
+const elSeal = $('seal'), elSealChar = $('sealChar'), elSealEn = $('sealEn');
+
+const show = el => el.classList.remove('hide');
+const hide = el => el.classList.add('hide');
+const vibrate = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+
+/* ================= 声音 ================= */
+const Sound = (() => {
+  let ac = null, master = null, noiseBuf = null, amb = null;
+  function ensure() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      ac = new AC();
+      master = ac.createGain();
+      master.gain.value = muted ? 0 : 0.85;
+      const comp = ac.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.ratio.value = 6;
+      master.connect(comp); comp.connect(ac.destination);
+      noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ac.state === 'suspended') ac.resume();
+    return true;
+  }
+  function tone(f, opt) {
+    if (muted || !ensure()) return;
+    opt = opt || {};
+    const t0 = ac.currentTime + (opt.t || 0);
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = opt.type || 'sine';
+    o.frequency.setValueAtTime(f, t0);
+    if (opt.f1) o.frequency.exponentialRampToValueAtTime(Math.max(opt.f1, 1), t0 + (opt.d || 0.3));
+    if (opt.detune) o.detune.value = opt.detune;
+    const a = opt.a || 0.008, d = opt.d || 0.3, peak = opt.g || 0.2;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+    o.connect(g); g.connect(master);
+    o.start(t0); o.stop(t0 + a + d + 0.05);
+  }
+  function noise(opt) {
+    if (muted || !ensure()) return;
+    opt = opt || {};
+    const t0 = ac.currentTime + (opt.t || 0);
+    const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    const f = ac.createBiquadFilter();
+    f.type = opt.type || 'bandpass';
+    f.frequency.setValueAtTime(opt.fc || 800, t0);
+    if (opt.fc1) f.frequency.exponentialRampToValueAtTime(opt.fc1, t0 + (opt.d || 0.2));
+    f.Q.value = opt.q || 1;
+    const g = ac.createGain();
+    const a = opt.a || 0.005, d = opt.d || 0.2, peak = opt.g || 0.15;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+    s.connect(f); f.connect(g); g.connect(master);
+    s.start(t0); s.stop(t0 + a + d + 0.05);
+  }
+  const LADDER = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.51];
+  return {
+    unlock() { ensure(); },
+    setMuted(m, inGame) { muted = m; if (master) master.gain.value = m ? 0 : 0.85; if (!m && inGame) this.ambStart(); },
+    ui()   { tone(660, { type: 'triangle', g: 0.06, d: 0.08 }); },
+    tick() { tone(440, { type: 'triangle', g: 0.07, d: 0.1 }); },
+    flipBeep() { tone(1200, { type: 'square', g: 0.09, d: 0.06, a: 0.002 }); },
+    miniFlip() { tone(950, { type: 'triangle', g: 0.035, d: 0.06, a: 0.002 }); },
+    ready() { tone(880, { type: 'sine', g: 0.18, d: 0.35 }); tone(1108, { t: 0.08, g: 0.12, d: 0.4 }); },
+    absorb(phase, combo) {
+      const n = LADDER[clamp(combo, 0, LADDER.length - 1)];
+      if (phase === 1) { tone(n, { g: 0.16, d: 0.5, a: 0.004 }); tone(n * 2, { g: 0.05, d: 0.3 }); }
+      else { tone(n / 2, { type: 'triangle', g: 0.18, d: 0.5, a: 0.004 }); tone(n, { g: 0.04, d: 0.25 }); }
+    },
+    golden() { tone(880, { g: 0.12, d: 0.7 }); tone(1318.5, { t: 0.07, g: 0.12, d: 0.8 }); tone(1760, { t: 0.14, g: 0.07, d: 0.9 }); },
+    split() { tone(660, { type: 'triangle', g: 0.1, d: 0.1 }); tone(440, { t: 0.06, type: 'triangle', g: 0.08, d: 0.12 }); },
+    graze()  { tone(2093, { g: 0.045, d: 0.09, a: 0.002 }); },
+    sw(toYang) {
+      noise({ fc: toYang ? 500 : 1500, fc1: toYang ? 1700 : 380, g: 0.10, d: 0.16, q: 2 });
+      tone(toYang ? 740 : 520, { type: 'triangle', g: 0.07, d: 0.12 });
+    },
+    damage() {
+      tone(120, { f1: 38, g: 0.5, d: 0.4, a: 0.004 });
+      noise({ fc: 260, g: 0.3, d: 0.25, q: 0.8, type: 'lowpass' });
+      noise({ fc: 2400, g: 0.12, d: 0.06, q: 1.5 });
+    },
+    bump()  { tone(90, { f1: 55, g: 0.14, d: 0.12 }); noise({ fc: 300, g: 0.06, d: 0.08, type: 'lowpass' }); },
+    wave()  { tone(72, { g: 0.2, d: 0.14, a: 0.01 }); tone(72, { t: 0.22, g: 0.2, d: 0.16, a: 0.01 }); },
+    tide()  { noise({ fc: 300, fc1: 900, g: 0.14, d: 0.8, q: 1.5 }); tone(196, { g: 0.1, d: 0.7 }); },
+    heart() { tone(58, { g: 0.18, d: 0.12 }); tone(52, { t: 0.18, g: 0.14, d: 0.14 }); },
+    taijiOn() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, { t: i * 0.06, g: 0.12, d: 0.6 }));
+      noise({ fc: 600, fc1: 2400, g: 0.06, d: 0.5, q: 3 });
+    },
+    taijiOff() { tone(783.99, { g: 0.08, d: 0.3 }); tone(523.25, { t: 0.08, g: 0.08, d: 0.4 }); },
+    over() { tone(65.4, { g: 0.4, d: 2.4, a: 0.01 }); tone(98, { t: 0.02, g: 0.15, d: 2.0 }); tone(130.8, { t: 0.03, g: 0.08, d: 1.6 }); },
+    ambStart() {
+      if (muted || !ensure() || amb) return;
+      const g = ac.createGain(); g.gain.value = 0; g.connect(master);
+      const o1 = ac.createOscillator(), o2 = ac.createOscillator();
+      o1.frequency.value = 55; o2.frequency.value = 82.41; o2.detune.value = 4;
+      const og = ac.createGain(); og.gain.value = 0.05;
+      o1.connect(og); o2.connect(og); og.connect(g);
+      const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+      const wf = ac.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 240; wf.Q.value = 0.4;
+      const wg = ac.createGain(); wg.gain.value = 0.05;
+      s.connect(wf); wf.connect(wg); wg.connect(g);
+      const lfo = ac.createOscillator(); lfo.frequency.value = 0.08;
+      const lg = ac.createGain(); lg.gain.value = 0.02;
+      lfo.connect(lg); lg.connect(g.gain);
+      o1.start(); o2.start(); s.start(); lfo.start();
+      g.gain.setTargetAtTime(0.5, ac.currentTime, 2);
+      amb = { g, nodes: [o1, o2, s, lfo] };
+    },
+    ambStop() {
+      if (!amb) return;
+      const a = amb; amb = null;
+      a.g.gain.setTargetAtTime(0, ac.currentTime, 0.4);
+      setTimeout(() => { a.nodes.forEach(n => { try { n.stop(); } catch (e) {} }); try { a.g.disconnect(); } catch (e) {} }, 1200);
+    }
+  };
+})();
+
+/* ================= 输入 · 鼠标 / 触控 二合一 ================= */
+const isCoarse = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+const input = {
+  tx: 0, ty: 0, has: false,          // 指针目标点
+  id: null, sx: 0, sy: 0, t0: 0, moved: false   // 触控拖拽 / 点按判定
+};
+
+cv.addEventListener('pointerdown', e => {
+  if (state !== ST.PLAY && state !== ST.DYING) return;
+  input.tx = e.clientX; input.ty = e.clientY; input.has = true;
+  if (input.id === null) {
+    input.id = e.pointerId;
+    input.sx = e.clientX; input.sy = e.clientY;
+    input.t0 = performance.now(); input.moved = false;
+  }
+});
+window.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse') {
+    // 桌面：光标即目标，无需按住
+    input.tx = e.clientX; input.ty = e.clientY; input.has = true;
+    if (input.id === e.pointerId && Math.hypot(e.clientX - input.sx, e.clientY - input.sy) > 14) input.moved = true;
+    return;
+  }
+  if (input.id !== e.pointerId) return;
+  if (Math.hypot(e.clientX - input.sx, e.clientY - input.sy) > 14) input.moved = true;
+  input.tx = e.clientX; input.ty = e.clientY; input.has = true;
+});
+const endTouch = e => {
+  if (input.id !== e.pointerId) return;
+  const wasTap = !input.moved && performance.now() - input.t0 < 300;
+  input.id = null;
+  if (e.pointerType !== 'mouse') input.has = false;   // 手指抬起，停在原地
+  if (wasTap && state === ST.PLAY && chi >= 8) triggerTaiji();
+};
+window.addEventListener('pointerup', endTouch);
+window.addEventListener('pointercancel', endTouch);
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('contextmenu', e => { if (e.target === cv) e.preventDefault(); });
+
+/* ================= 游戏状态 ================= */
+const ST = { TITLE: 0, CD: 1, PLAY: 2, PAUSE: 3, DYING: 4, OVER: 5 };
+let state = ST.TITLE;
+
+let W = 0, H = 0, cx = 0, cy = 0, R = 200, baseR = 200, arenaK = 1;
+let t = 0, timescale = 1, hitstop = 0, shakeT = 0, shakeAmp = 0;
+let lives = 3, absorbs = 0, grazes = 0, combo = 0, comboT = 0;
+let score = 0;
+let chi = 0, taijiT = 0, taijiCount = 0, invT = 0;
+let phaseT = 8, phaseInt = 8, afterFlipT = 0, readyWarned = false, flipWarned = false;
+let cdT = 0, dyingT = 0, deathCause = 'void';
+let flashT = 0, flashColor = '#ffffff';
+let hbT = 0, ringPulseT = 0, bumpCd = 0, hudAcc = 0;
+let mileIdx = 0, firstYinDone = false, hintMove = false, hintDodge = false, hintTaiji = false, hintFlip = false;
+let seenWaver = false, seenSplit = false, seenDual = false, seenTide = false, seenGraze = false, seenShrink = false;   // 首见提示（跨局保留）
+let silentFlip = false;   // 无常：360s 后 15% 的翻转毫无预警
+let lastQuotes = [];
+let shareTxt = '';
+
+/* 里程碑：秒数 / 印章字 / 英文 / 奖励分（600s 后每 60s 循环"逍遥"） */
+const MILES = [
+  [30,  '入境', 'CALM',       500],
+  [60,  '守中', 'CENTERED',  1000],
+  [90,  '抱一', 'ONE',       1500],
+  [120, '归朴', 'SIMPLE',    2000],
+  [180, '忘言', 'WORDLESS',  3000],
+  [240, '无极', 'LIMITLESS', 4000],
+  [300, '太极', 'TAIJI',     6000],
+  [360, '坐忘', 'FORGETTING', 8000],
+  [420, '朝彻', 'DAYBREAK',  10000],
+  [480, '见独', 'SOLITUDE',  12000],
+  [540, '撄宁', 'SERENITY',  15000],
+  [600, '逍遥', 'FREE',      20000]
+];
+
+const player = { x: 0, y: 0, vx: 0, vy: 0, r: 13, rot: 0, phase: 1, animT: 0, trail: [] };
+let orbs = [], parts = [], motes = [], queue = [], floaters = [], ripples = [], petals = [], streaks = [], flipFx = [], fireflies = [];
+// 场外点缀总开关：未来两侧/上下空区挂载广告位时，把 sideFxOn 置 false 即可让位
+let sideFxOn = true;
+let canPerfect = false, salvaged = false;   // 完美接应窗口 / 以炁换命（每局一次）
+let director = {};
+
+/* ================= 生成器 ================= */
+function edgePos(ang, off) { return { x: cx + Math.cos(ang) * (R + (off || 26)), y: cy + Math.sin(ang) * (R + (off || 26)) }; }
+function aimFrom(p, tx, ty, sp) { const a = Math.atan2(ty - p.y, tx - p.x); return { vx: Math.cos(a) * sp, vy: Math.sin(a) * sp }; }
+function orbSpeed(k) { return R * (0.5 + Math.min(t * 0.004, 0.55)) * (k || 1) * rand(0.9, 1.12); }
+function trackStrength() {
+  if (t < 15) return 0;
+  if (t < 30) return 2.5;
+  if (t < 60) return 6;
+  if (t < 180) return 10;
+  if (t < 360) return 14;
+  return 18;   // 无极境：如影随形
+}
+function trackFreq() {
+  if (t < 30) return 7;
+  if (t < 60) return 5;
+  return 4;
+}
+function safeAng() {
+  let a = rand(TAU);
+  for (let i = 0; i < 6; i++) {
+    const p = edgePos(a);
+    if (Math.hypot(p.x - player.x, p.y - player.y) > R * 0.8) break;
+    a = rand(TAU);
+  }
+  return a;
+}
+function pickType() {
+  // 后期新球种逐步登场：90s 变速球 / 180s 分裂球 / 210s 双相球
+  const pool = ['norm', 'norm', 'norm', 'norm'];
+  if (t > 90) pool.push('waver');
+  if (t > 180) pool.push('split');
+  if (t > 210) pool.push('dual', 'dual');
+  return pool[(Math.random() * pool.length) | 0];
+}
+function spawnOrb(x, y, vx, vy, phase, r, type) {
+  if (orbs.length > 52) return null;
+  const o = {
+    x, y, vx, vy, phase,
+    r: r || clamp(R * 0.042, 8, 14),
+    grazed: false, dead: false, wob: rand(TAU),
+    type: type || 'norm', flipT: rand(1.1, 1.7), small: false, sp0: 0, safeT: 0
+  };
+  if (o.type === 'split' && !r) o.r = clamp(R * 0.062, 12, 20);
+  if (o.type === 'waver') o.sp0 = Math.hypot(vx, vy);
+  orbs.push(o);
+  return o;
+}
+function ambientOrb() {
+  const a = safeAng(), p = edgePos(a);
+  const tx = cx + rand(-R * 0.5, R * 0.5), ty = cy + rand(-R * 0.5, R * 0.5);
+  let phase, slow = 1;
+  if (t < 7) phase = 1;
+  else if (!firstYinDone) { phase = 0; slow = 0.55; }
+  else phase = Math.random() < 0.5 ? 0 : 1;
+  const type = firstYinDone ? pickType() : 'norm';
+  const v = aimFrom(p, tx, ty, orbSpeed(slow));
+  spawnOrb(p.x, p.y, v.vx, v.vy, phase, undefined, type);
+  if (phase === 0 && !firstYinDone) {
+    firstYinDone = true;
+    if (gamesPlayed < 2) showToast('Same color absorbs · Opposite color wounds', 2.4);
+  }
+  if (type === 'waver' && !seenWaver) { seenWaver = true; showToast('Some orbs breathe — fast, then slow. Feel their rhythm.', 2.4); }
+  if (type === 'split' && !seenSplit) { seenSplit = true; showToast('Big orbs split in two — beware the pieces.', 2.4); }
+  if (type === 'dual' && !seenDual)   { seenDual = true; showToast('This orb flips its own color. Trust nothing.', 2.6); }
+}
+
+function patRing() {
+  const n = Math.round(9 + Math.min(t / 10, 7));
+  const ph = firstYinDone ? (Math.random() < 0.5 ? 0 : 1) : 1;
+  const a0 = rand(TAU);
+  for (let i = 0; i < n; i++) {
+    const p = edgePos(a0 + i * TAU / n, 24);
+    const v = aimFrom(p, cx + rand(-R * 0.15, R * 0.15), cy + rand(-R * 0.15, R * 0.15), orbSpeed(0.8));
+    queue.push({ at: t + i * 0.04, x: p.x, y: p.y, vx: v.vx, vy: v.vy, phase: ph });
+  }
+}
+function patCross() {
+  const horiz = Math.random() < 0.5;
+  const n = Math.round(5 + Math.min(t / 18, 4));
+  for (let i = 0; i < n; i++) {
+    const f = i / (n - 1) - 0.5;
+    let p, v;
+    if (horiz) { p = { x: cx - R - 24, y: cy + f * R * 1.1 }; v = aimFrom(p, cx + R + rand(-40, 40), p.y + rand(-30, 30), orbSpeed(1.05)); }
+    else { p = { x: cx + f * R * 1.1, y: cy - R - 24 }; v = aimFrom(p, p.x + rand(-30, 30), cy + R + rand(-40, 40), orbSpeed(1.05)); }
+    queue.push({ at: t + i * 0.13, x: p.x, y: p.y, vx: v.vx, vy: v.vy, phase: firstYinDone ? i % 2 : 1 });
+  }
+}
+function patSpiral() {
+  const n = Math.round(11 + Math.min(t / 12, 6));
+  const a0 = rand(TAU), dir = Math.random() < 0.5 ? 1 : -1;
+  for (let i = 0; i < n; i++) {
+    const ang = a0 + dir * i * 0.52;
+    const p = edgePos(ang, 24);
+    const v = aimFrom(p, cx + Math.cos(ang + dir * 1.2) * R * 0.3, cy + Math.sin(ang + dir * 1.2) * R * 0.3, orbSpeed(0.85));
+    queue.push({ at: t + i * 0.11, x: p.x, y: p.y, vx: v.vx, vy: v.vy, phase: firstYinDone ? i % 2 : 1 });
+  }
+}
+function patStream() {
+  const n = Math.round(5 + Math.min(t / 20, 4));
+  const a1 = safeAng(), a2 = a1 + PI + rand(-0.4, 0.4);
+  const ph1 = firstYinDone ? (Math.random() < 0.5 ? 0 : 1) : 1;
+  for (let i = 0; i < n; i++) {
+    const p1 = edgePos(a1 + rand(-0.12, 0.12), 24), p2 = edgePos(a2 + rand(-0.12, 0.12), 24);
+    const v1 = aimFrom(p1, player.x + rand(-40, 40), player.y + rand(-40, 40), orbSpeed(1.3));
+    const v2 = aimFrom(p2, player.x + rand(-40, 40), player.y + rand(-40, 40), orbSpeed(1.3));
+    queue.push({ at: t + i * 0.16, x: p1.x, y: p1.y, vx: v1.vx, vy: v1.vy, phase: ph1 });
+    queue.push({ at: t + i * 0.16 + 0.08, x: p2.x, y: p2.y, vx: v2.vx, vy: v2.vy, phase: 1 - ph1 });
+  }
+}
+/* 阴阳潮汐：300 秒后，单一颜色从一道弧线涌入 */
+function patTide() {
+  const ph = Math.random() < 0.5 ? 0 : 1;
+  const aC = rand(TAU), n = Math.round(8 + Math.min(t / 60, 5));
+  for (let i = 0; i < n; i++) {
+    const a = aC + (i / (n - 1) - 0.5) * 1.5;
+    const p = edgePos(a, 26);
+    const v = aimFrom(p, cx + rand(-R * 0.3, R * 0.3), cy + rand(-R * 0.3, R * 0.3), orbSpeed(0.9));
+    queue.push({ at: t + i * 0.12, x: p.x, y: p.y, vx: v.vx, vy: v.vy, phase: ph, type: t > 340 && Math.random() < 0.2 ? 'waver' : 'norm' });
+  }
+  Sound.tide();
+  if (!seenTide) { seenTide = true; showToast('The tide rises — one color floods the circle.', 2.6); }
+}
+function resetDirector() { director = { nextWave: 13, lullUntil: 0, waveAt: -10, ambT: 0.8, tideAt: 312 }; }
+function directorUpdate(dt) {
+  if (t < 2.5) return;
+  director.ambT -= dt;
+  if (director.ambT <= 0 && t - director.waveAt > 2.5) {
+    ambientOrb();
+    let iv = clamp(1.55 - t * 0.0062, 0.55, 1.55);
+    if (t < director.lullUntil) iv *= 2.6;
+    if (taijiT > 0) iv *= 1.3;
+    if (t > 240) iv *= 0.8;   // 大后期 ambient 也更密
+    director.ambT = iv * rand(0.85, 1.2);
+  }
+  if (t >= director.nextWave) {
+    const unlocked = [patRing];
+    if (t > 20) unlocked.push(patCross);
+    if (t > 34) unlocked.push(patSpiral);
+    if (t > 48) unlocked.push(patStream);
+    if (t > 70 && Math.random() < 0.22) { patRing(); patStream(); }
+    else unlocked[(Math.random() * unlocked.length) | 0]();
+    Sound.wave();
+    director.waveAt = t;
+    director.nextWave = t + rand(12.5, 16.5) * (t > 90 ? 0.85 : 1) * (t > 240 ? 0.8 : 1);
+    director.lullUntil = t + rand(4.5, 6.5);
+  }
+  if (t > 300 && t >= director.tideAt) {
+    patTide();
+    if (t > 420 && Math.random() < 0.4) patTide();   // 无极境：双侧潮汐对涌
+    const base = clamp(20 - (t - 300) / 25, 10, 20); // 潮汐间隔持续收紧 20s→10s
+    director.tideAt = t + rand(base, base + 8);
+  }
+}
+
+/* ================= 战斗反馈 ================= */
+function burst(x, y, color, n, sp, life) {
+  for (let i = 0; i < n; i++) {
+    if (parts.length > 240) return;
+    const a = rand(TAU), s = rand(sp * 0.3, sp);
+    parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rand(life * 0.5, life), max: life, size: rand(1.5, 3.5), color });
+  }
+}
+function addFloater(x, y, txt, color) {
+  if (floaters.length > 24) floaters.shift();
+  floaters.push({ x, y, txt, color, life: 0.9, max: 0.9 });
+}
+function splitOrb(o) {
+  const a = Math.atan2(o.vy, o.vx), sp = Math.hypot(o.vx, o.vy) * 1.05;
+  for (const da of [-0.62, 0.62]) {
+    const c = spawnOrb(
+      o.x + Math.cos(a + da) * o.r * 0.8, o.y + Math.sin(a + da) * o.r * 0.8,
+      Math.cos(a + da) * sp, Math.sin(a + da) * sp, o.phase, clamp(R * 0.034, 7, 11), 'norm');
+    if (c) { c.small = true; c.safeT = 0.5; }   // 生成保护期：不会刚出生就被玩家吸掉/撞上
+  }
+  burst(o.x, o.y, o.phase === 1 ? '#ffe3ae' : '#a08cff', 10, 90, 0.4);
+  Sound.split();
+}
+function absorbOrb(o) {
+  absorbs++;
+  const prevMult = Math.min(1 + Math.floor(Math.max(combo - 1, 0) / 3), 5);
+  combo++; comboT = 4;
+  const mult = Math.min(1 + Math.floor((combo - 1) / 3), 5);
+  ringPulseT = 0.3;
+  Sound.absorb(o.phase, combo - 1);
+  burst(o.x, o.y, o.phase === 1 ? '#ffe3ae' : '#a08cff', 10, 110, 0.5);
+  let pts = 100 * mult * (taijiT > 0 ? 2 : 1);
+  if (lives === 1) pts = Math.round(pts * 1.5);          // 残血暴走：向死而生
+  // 完美接应：翻转后窗口期内第一吸，三倍暴击
+  if (canPerfect && afterFlipT > 0) {
+    canPerfect = false;
+    pts *= 3;
+    addFloater(o.x, o.y - 18, 'PERFECT', '#ffffff');
+    Sound.golden();
+    burst(o.x, o.y, '#ffffff', 8, 120, 0.4);
+  }
+  score += pts;
+  addFloater(o.x, o.y, '+' + pts, o.phase === 1 ? '#ffd68c' : '#b3a1ff');
+  // 汲取光轨：能量流向玩家
+  if (streaks.length < 20) streaks.push({ x: o.x, y: o.y, col: o.phase === 1 ? '240,199,120' : '157,134,255', life: 0.25, max: 0.25 });
+  if (mult > prevMult) {
+    addFloater(player.x, player.y - 20, '×' + mult + ' UP', '#ffe9bd');
+    burst(player.x, player.y, '#ffe9bd', 8, 90, 0.35);
+  }
+  if (o.type === 'split' && !o.small) splitOrb(o);
+  if (taijiT <= 0) {
+    if (chi >= 24) {
+      score += 200;   // 炁满溢出转为分数，不再浪费
+      addFloater(o.x, o.y + 14, '+200', '#f0c778');
+    } else {
+      const bonus = afterFlipT > 0 ? 2 : 1;
+      chi = Math.min(24, chi + bonus);
+    }
+  }
+  if (chi >= 8 && !readyWarned) {
+    readyWarned = true;
+    Sound.ready();
+    if (gamesPlayed < 2) showToast('Tap anywhere — enter TAIJI · untouchable', 2.2);
+  }
+}
+function triggerTaiji() {
+  if (state !== ST.PLAY || taijiT > 0 || chi < 8) return;
+  startTaiji();
+}
+function startTaiji() {
+  const tier = chi >= 24 ? 2.4 : chi >= 16 ? 1.6 : 0.8;
+  taijiT = tier; taijiCount++; chi = 0; readyWarned = false;
+  Sound.taijiOn(); flashT = 0.6; flashColor = '#ffe9bd'; ringPulseT = 0.4; vibrate(25);
+  // 水墨涟漪 + 墨梅落瓣
+  ripples.push({ x: player.x, y: player.y, r: player.r, life: 0.8, max: 0.8 });
+  if (ASSETS.get('petals')) {
+    for (let i = 0; i < 7; i++) {
+      petals.push({
+        x: player.x + rand(-R * 0.5, R * 0.5), y: player.y + rand(-R * 0.6, 0),
+        vy: rand(26, 52), sway: rand(TAU), rot: rand(TAU), vr: rand(-1.6, 1.6),
+        f: (Math.random() * 3) | 0, size: rand(16, 30), life: rand(1.2, 1.9), max: 1.9
+      });
+    }
+  }
+}
+function hurt(cause, sx, sy, svx, svy) {
+  // 以炁换命：致命一击时，若炁满 12，倾尽全部炁抵一命（每局一次）
+  if (lives <= 1 && chi >= 12 && !salvaged) {
+    salvaged = true; chi = 0; combo = 0;
+    invT = 2.5; flashT = 0.8; flashColor = '#ffe9bd'; ringPulseT = 0.5;
+    hitstop = 0.12; shakeT = 1; shakeAmp = 8;
+    Sound.golden(); vibrate([40, 60, 40]);
+    burst(player.x, player.y, '#ffe9bd', 22, 180, 0.7);
+    ripples.push({ x: player.x, y: player.y, r: player.r, life: 0.7, max: 0.7 });
+    addFloater(player.x, player.y - 30, '以炁换命', '#ffe9bd');
+    showToast('以炁换命 · A life bought with spirit', 2.4);
+    return;
+  }
+  lives--; updateLives();
+  if (lives === 1 && state !== ST.DYING) showToast('One breath left — every spark counts half again', 2.6);
+  deathCause = cause;
+  hitstop = 0.09; shakeT = 1; shakeAmp = 10; flashT = 1;
+  flashColor = cause === 'yang' ? '#ffdf9e' : cause === 'yin' ? '#8f7bff' : '#ffffff';
+  Sound.damage(); vibrate(70);
+  chi = 0; combo = 0; taijiT = 0;
+  invT = 1.6;
+  let kx, ky;
+  if (cause === 'void') { const d = Math.hypot(player.x - cx, player.y - cy) || 1; kx = (cx - player.x) / d; ky = (cy - player.y) / d; }
+  else { const d = Math.hypot(player.x - sx, player.y - sy) || 1; kx = (player.x - sx) / d; ky = (player.y - sy) / d; }
+  player.vx = kx * R * 2.2 + (svx || 0) * 0.25;
+  player.vy = ky * R * 2.2 + (svy || 0) * 0.25;
+  burst(player.x, player.y, '#ffffff', 14, 160, 0.5);
+  for (let i = orbs.length - 1; i >= 0; i--) {
+    if (Math.hypot(orbs[i].x - player.x, orbs[i].y - player.y) < 130) {
+      burst(orbs[i].x, orbs[i].y, '#888898', 6, 80, 0.35);
+      orbs[i].dead = true;
+    }
+  }
+  if (lives <= 0) {
+    // 死亡墨涌：墨色涟漪从倒下的地方漫开
+    ripples.push({ x: player.x, y: player.y, r: player.r, life: 1.1, max: 1.1 });
+    flashColor = '#06060c'; flashT = 1.4;
+    state = ST.DYING; dyingT = 0.75;
+  }
+}
+
+function nextPhaseInt() {
+  if (t < 30) return 8;
+  if (t < 60) return Math.max(3, 8 - (t - 30) / 30 * 5);
+  if (t < 300) return rand(3, 6);
+  if (t < 420) return rand(2, 4);
+  return rand(1.5, 3);   // 无极境：翻转如呼吸
+}
+function flipPhase() {
+  player.phase = 1 - player.phase;
+  player.animT = 0.35;
+  invT = Math.max(invT, 0.35);
+  afterFlipT = 0.8;
+  ringPulseT = 0.3;
+  phaseInt = nextPhaseInt();
+  phaseT = phaseInt;
+  flipWarned = false;
+  silentFlip = t > 360 && Math.random() < 0.15;   // 无常：下一轮回可能毫无预兆
+  canPerfect = true;   // 完美接应窗口开启
+  flipFx.push({ life: 0.6, max: 0.6 });   // 阴阳双鱼收束入体
+  Sound.sw(player.phase === 1);
+  burst(player.x, player.y, player.phase === 1 ? '#ffe3ae' : '#a08cff', 10, 100, 0.4);
+}
+
+/* ================= 主更新 ================= */
+function update(dt) {
+  t += dt;
+
+  // 无极境：300 秒后太极场缓缓内收（最小 75%）
+  if (t > 300) {
+    arenaK = clamp(1 - 0.03 * ((t - 300) / 60), 0.75, 1);
+    R = baseR * arenaK;
+    if (!seenShrink) { seenShrink = true; showToast('The circle breathes in — space grows precious', 2.6); }
+  }
+
+  // —— 移动：球追随指针（鼠标悬停 / 手指拖动）——
+  const VMAX = 2.9 * R;
+  if (input.has) {
+    const dvx = clamp((input.tx - player.x) * 12, -VMAX, VMAX);
+    const dvy = clamp((input.ty - player.y) * 12, -VMAX, VMAX);
+    const k = 1 - Math.exp(-18 * dt);
+    player.vx += (dvx - player.vx) * k;
+    player.vy += (dvy - player.vy) * k;
+  } else {
+    const f = Math.exp(-4.6 * dt);
+    player.vx *= f; player.vy *= f;
+  }
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+
+  const bdx = player.x - cx, bdy = player.y - cy, bd = Math.hypot(bdx, bdy), maxD = R - player.r;
+  if (bd > maxD) {
+    const nx = bdx / bd, ny = bdy / bd;
+    player.x = cx + nx * maxD; player.y = cy + ny * maxD;
+    const vn = player.vx * nx + player.vy * ny;
+    if (vn > 0) { player.vx -= vn * nx * 1.4; player.vy -= vn * ny * 1.4; }
+    if (taijiT > 0) { Sound.bump(); bumpCd = 0.4; }
+    else if (invT <= 0) hurt('void', cx, cy);
+    else if (bumpCd <= 0 && vn > R * 0.6) { Sound.bump(); bumpCd = 0.4; }
+  }
+  if (bumpCd > 0) bumpCd -= dt;
+
+  if (invT > 0) invT -= dt;
+  if (comboT > 0) { comboT -= dt; if (comboT <= 0) combo = 0; }
+  if (taijiT > 0) {
+    taijiT -= dt;
+    if (taijiT <= 0) {
+      Sound.taijiOff();
+      player.phase = Math.random() < 0.5 ? 0 : 1;
+      phaseInt = nextPhaseInt(); phaseT = phaseInt; flipWarned = false;
+      silentFlip = t > 360 && Math.random() < 0.15;
+    }
+  } else if (state === ST.PLAY) {
+    phaseT -= dt;
+    if (!flipWarned && !silentFlip && phaseT <= 0.3) {   // 无常翻转不给任何预警
+      flipWarned = true;
+      Sound.flipBeep();
+      flashT = Math.max(flashT, 0.08);
+    }
+    if (phaseT <= 0) flipPhase();
+  }
+  if (afterFlipT > 0) { afterFlipT -= dt; if (afterFlipT <= 0) canPerfect = false; }
+  if (ringPulseT > 0) ringPulseT -= dt;
+  if (flashT > 0) flashT -= dt * 2.2;
+  player.rot += dt * (player.animT > 0 ? 14 : taijiT > 0 ? 9 : 0.9);
+  if (player.animT > 0) player.animT -= dt;
+  player.trail.push({ x: player.x, y: player.y });
+  if (player.trail.length > 16) player.trail.shift();
+
+  if (lives === 1 && state === ST.PLAY) { hbT -= dt; if (hbT <= 0) { Sound.heart(); hbT = 2.6; } }
+
+  if (mileIdx < MILES.length && t >= MILES[mileIdx][0]) {
+    const m = MILES[mileIdx];
+    showSeal(m[1], m[2]);
+    score += m[3];
+    addFloater(player.x, player.y - 26, '+' + m[3], '#f0c778');
+    burst(cx, H * 0.33, '#ffd68c', 16, 150, 0.7);   // 盖印金粉雨
+    Sound.golden();
+    mileIdx++;
+  } else if (mileIdx >= MILES.length && t >= 600 + (mileIdx - MILES.length + 1) * 60) {
+    // 逍遥之后：每 60 秒再盖一枚，永无终点
+    const n = mileIdx - MILES.length + 1;
+    showSeal('逍遥', 'FREE ×' + n);
+    score += 6000;
+    addFloater(player.x, player.y - 26, '+6000', '#f0c778');
+    burst(cx, H * 0.33, '#ffd68c', 16, 150, 0.7);
+    Sound.golden();
+    mileIdx++;
+  }
+
+  // —— 新手引导：前两局循序提示 ——
+  if (gamesPlayed < 1) {
+    if (!hintMove && t > 0.4) { hintMove = true; showToast('Move with your mouse — or your finger', 2.2); }
+    else if (!hintDodge && t > 2.6) { hintDodge = true; showToast('Absorb the SAME color — it feeds you', 2.2); }
+    else if (!hintTaiji && t > 5.0) { hintTaiji = true; showToast('Dodge the OPPOSITE color — it wounds you', 2.2); }
+    else if (!hintFlip && t > 7.4) { hintFlip = true; showToast('Your color flips without warning. Watch yourself.', 2.4); }
+  } else if (gamesPlayed < 2) {
+    if (!hintMove && t > 0.4) { hintMove = true; showToast('Same absorbs · Opposite wounds', 2.0); }
+    else if (!hintFlip && t > 3.2) { hintFlip = true; showToast('Flips come unannounced — stay ready', 2.0); }
+  }
+
+  directorUpdate(dt);
+  for (let i = queue.length - 1; i >= 0; i--) {
+    if (t >= queue[i].at) { const q = queue[i]; spawnOrb(q.x, q.y, q.vx, q.vy, q.phase, q.r, q.type); queue.splice(i, 1); }
+  }
+
+  for (let i = orbs.length - 1; i >= 0; i--) {
+    const o = orbs[i];
+    if (o.dead) continue;
+    o.x += o.vx * dt; o.y += o.vy * dt; o.wob += dt * 3;
+    if (o.safeT > 0) o.safeT -= dt;
+
+    // 太极中：所有球吸向玩家
+    if (taijiT > 0) {
+      const da = Math.atan2(player.y - o.y, player.x - o.x);
+      const pull = R * 3.5;
+      o.vx += (Math.cos(da) * pull - o.vx) * 3 * dt;
+      o.vy += (Math.sin(da) * pull - o.vy) * 3 * dt;
+      o.vx *= 0.98; o.vy *= 0.98;
+    }
+    // 变速球：速度随呼吸起伏
+    if (o.type === 'waver' && o.sp0 > 0) {
+      const osc = 0.55 + 0.9 * (0.5 + 0.5 * Math.sin(t * 2.6 + o.wob * 2));
+      const sp = o.sp0 * osc, cur = Math.hypot(o.vx, o.vy) || 1;
+      o.vx *= sp / cur; o.vy *= sp / cur;
+    }
+    // 双相球：自身阴阳定时互换
+    if (o.type === 'dual') {
+      o.flipT -= dt;
+      if (o.flipT <= 0) {
+        o.phase = 1 - o.phase;
+        o.flipT = rand(1.1, 1.7);
+        burst(o.x, o.y, o.phase === 1 ? '#ffe3ae' : '#a08cff', 5, 50, 0.25);
+        Sound.miniFlip();
+      }
+    }
+    // 异色弱追踪
+    const ts = trackStrength();
+    if (ts > 0 && o.phase !== player.phase && Math.floor(o.wob * 3) % trackFreq() === 0) {
+      const toPlayer = Math.atan2(player.y - o.y, player.x - o.x);
+      let curAngle = Math.atan2(o.vy, o.vx);
+      const diff = toPlayer - curAngle;
+      const adj = ((diff + PI * 3) % TAU) - PI;
+      const dist = Math.hypot(o.x - player.x, o.y - player.y);
+      const distFactor = clamp(dist / (R * 1.5), 0, 1);
+      const steer = Math.sign(adj) * Math.min(ts * 0.012 * distFactor, Math.abs(adj));
+      curAngle += steer;
+      const sp = Math.hypot(o.vx, o.vy);
+      o.vx = Math.cos(curAngle) * sp;
+      o.vy = Math.sin(curAngle) * sp;
+    }
+    if (Math.hypot(o.x - cx, o.y - cy) > R + 90) { o.dead = true; continue; }
+    const pd = Math.hypot(o.x - player.x, o.y - player.y);
+    const rr = o.r + player.r;
+    if (pd < rr && o.safeT <= 0) {
+      if (taijiT > 0 || o.phase === player.phase) { absorbOrb(o); o.dead = true; continue; }
+      if (invT <= 0) {
+        if (o.type === 'split' && !o.small) splitOrb(o);
+        hurt(o.phase === 1 ? 'yang' : 'yin', o.x, o.y, o.vx, o.vy);
+        o.dead = true; continue;
+      }
+    } else if (o.safeT <= 0 && !o.grazed && pd < rr + 16) {
+      o.grazed = true; grazes++;
+      const gpts = lives === 1 ? 75 : 50;
+      score += gpts;
+      addFloater(player.x + (o.x - player.x) * 0.7, player.y + (o.y - player.y) * 0.7, '+' + gpts, '#ffffff');
+      Sound.graze();
+      burst(player.x + (o.x - player.x) * 0.7, player.y + (o.y - player.y) * 0.7, '#ffffff', 3, 60, 0.25);
+      if (!seenGraze) { seenGraze = true; showToast('Close shave! +50 — risk has its rewards', 2.2); }
+    }
+  }
+  for (let i = orbs.length - 1; i >= 0; i--) if (orbs[i].dead) orbs.splice(i, 1);
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.life -= dt;
+    if (p.life <= 0) { parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vx *= Math.exp(-3 * dt); p.vy *= Math.exp(-3 * dt);
+  }
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    const fl = floaters[i];
+    fl.life -= dt; fl.y -= 30 * dt;
+    if (fl.life <= 0) floaters.splice(i, 1);
+  }
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const rp = ripples[i];
+    rp.r += R * 2.1 * dt; rp.life -= dt;
+    if (rp.life <= 0) ripples.splice(i, 1);
+  }
+  for (let i = streaks.length - 1; i >= 0; i--) {
+    streaks[i].life -= dt;
+    if (streaks[i].life <= 0) streaks.splice(i, 1);
+  }
+  for (let i = flipFx.length - 1; i >= 0; i--) {
+    flipFx[i].life -= dt;
+    if (flipFx[i].life <= 0) flipFx.splice(i, 1);
+  }
+  for (let i = petals.length - 1; i >= 0; i--) {
+    const p = petals[i];
+    p.life -= dt;
+    p.sway += dt * 2.2;
+    p.x += Math.cos(p.sway) * 18 * dt;
+    p.y += p.vy * dt;
+    p.rot += p.vr * dt;
+    if (p.life <= 0) petals.splice(i, 1);
+  }
+  for (const m of motes) {
+    m.a += dt * m.sp;
+    m.x += Math.cos(m.a) * dt * 6; m.y += Math.sin(m.a) * dt * 6;
+    const md = Math.hypot(m.x - cx, m.y - cy);
+    if (md > R - 6) { m.x = cx + (m.x - cx) / md * (R - 8); m.y = cy + (m.y - cy) / md * (R - 8); m.a += PI; }
+  }
+  // 场外萤火：缓升 + 游移 + 呼吸，在各自空区内环绕
+  for (const f of fireflies) {
+    f.ph += dt * f.sw;
+    f.x += (f.vx + Math.sin(f.ph) * 5) * dt;
+    f.y += f.vy * dt;
+    if (f.y < f.z.y - 12) f.y = f.z.y + f.z.h + 10;
+    else if (f.y > f.z.y + f.z.h + 12) f.y = f.z.y - 10;
+    if (f.x < f.z.x - 12) f.x = f.z.x + f.z.w + 10;
+    else if (f.x > f.z.x + f.z.w + 12) f.x = f.z.x - 10;
+  }
+
+  if (shakeT > 0) shakeT -= dt * 2.4;
+
+  hudAcc += dt;
+  if (hudAcc > 0.1) {
+    hudAcc = 0;
+    elHudTime.textContent = t.toFixed(1);
+    elHudScore.textContent = fmt(score);
+  }
+}
+
+/* ================= 渲染 ================= */
+let bgCv = null;
+function buildBg() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  bgCv = document.createElement('canvas');
+  bgCv.width = Math.round(W * dpr); bgCv.height = Math.round(H * dpr);
+  const b = bgCv.getContext('2d');
+  b.setTransform(dpr, 0, 0, dpr, 0, 0);
+  b.fillStyle = '#050508'; b.fillRect(0, 0, W, H);
+
+  // 主背景大图（cover 裁切），缺失时退回程序渐变
+  const bm = ASSETS.get('bgMain');
+  if (bm) {
+    const s = Math.max(W / bm.width, H / bm.height);
+    const dw = bm.width * s, dh = bm.height * s;
+    b.drawImage(bm, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    b.fillStyle = 'rgba(4,4,9,0.42)'; b.fillRect(0, 0, W, H);   // 压暗保读性
+  }
+  // 宣纸底纹
+  const bp = ASSETS.get('bgPaper');
+  if (bp) {
+    b.globalAlpha = 0.05;
+    for (let px = 0; px < W; px += 512) for (let py = 0; py < H; py += 512) b.drawImage(bp, px, py, 512, 512);
+    b.globalAlpha = 1;
+  }
+
+  let g = b.createRadialGradient(cx, cy, 0, cx, cy, R * 1.25);
+  g.addColorStop(0, bm ? 'rgba(14,13,23,0.35)' : '#0e0d17');
+  g.addColorStop(0.75, bm ? 'rgba(7,7,13,0.55)' : '#07070d');
+  g.addColorStop(1, bm ? 'rgba(4,4,7,0.75)' : '#040407');
+  b.fillStyle = g;
+  b.beginPath(); b.arc(cx, cy, R, 0, TAU); b.fill();
+  // 宣纸颗粒（无纸纹素材时的兜底质感）
+  if (!bp) {
+    for (let i = 0; i < 1100; i++) {
+      const x = Math.random() * W, y = Math.random() * H;
+      b.fillStyle = 'rgba(255,255,255,' + rand(0.004, 0.02) + ')';
+      b.fillRect(x, y, 1, 1);
+    }
+  }
+  // 场内淡墨圆环
+  b.strokeStyle = 'rgba(255,255,255,0.045)'; b.lineWidth = 1.2;
+  b.beginPath(); b.arc(cx, cy, R * 0.55, 0, TAU); b.stroke();
+  b.beginPath(); b.arc(cx, cy - R * 0.275, R * 0.275, 0, TAU); b.stroke();
+  b.beginPath(); b.arc(cx, cy + R * 0.275, R * 0.275, 0, TAU); b.stroke();
+  g = b.createRadialGradient(cx, cy, R * 0.6, cx, cy, Math.max(W, H) * 0.75);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.55)');
+  b.fillStyle = g; b.fillRect(0, 0, W, H);
+}
+function makeGlow(r, g, bl) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(' + r + ',' + g + ',' + bl + ',0.85)');
+  gr.addColorStop(0.25, 'rgba(' + r + ',' + g + ',' + bl + ',0.28)');
+  gr.addColorStop(1, 'rgba(' + r + ',' + g + ',' + bl + ',0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  return c;
+}
+const GLOW = {
+  gold: makeGlow(255, 214, 140),
+  violet: makeGlow(150, 120, 255),
+  white: makeGlow(255, 255, 255),
+  deep: makeGlow(240, 178, 90)
+};
+
+/* ================= 图片素材（缺失时自动回退程序渲染） ================= */
+const ASSETS = (() => {
+  const base = 'assets/opt/';
+  const defs = {
+    bgMain: 'bg_main.jpg', bgPaper: 'bg_paper.jpg',
+    taiji: 'orb_taiji.png', yang: 'orb_yang.webp', yin: 'orb_yin.webp',
+    ripple: 'fx_ripple.webp', ring: 'ring_frame.webp', mist: 'bg_mist.webp',
+    petals: 'fx_petals.webp'
+  };
+  const imgs = {};
+  for (const k in defs) {
+    const im = document.createElement('img');
+    im.onload = () => { im._ok = true; if ((k === 'bgMain' || k === 'bgPaper') && typeof buildBg === 'function' && W > 0) buildBg(); };
+    im.onerror = () => { im._ok = false; };
+    im.src = base + defs[k];
+    imgs[k] = im;
+  }
+  return { get(k) { const im = imgs[k]; return (im && im._ok) ? im : null; } };
+})();
+
+function drawTaijiBall(x, y, r, rot) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+  ctx.fillStyle = '#f2eee4'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, r, PI / 2, PI * 1.5);
+  ctx.fillStyle = '#14121e'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -r / 2, r / 2, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, r / 2, r / 2, 0, TAU);
+  ctx.fillStyle = '#f2eee4'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -r / 2, r * 0.14, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, r / 2, r * 0.14, 0, TAU);
+  ctx.fillStyle = '#14121e'; ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+}
+function drawPlayerBall(x, y, r, rot, phase) {
+  if (taijiT > 0) {
+    const im = ASSETS.get('taiji');
+    if (im) {
+      // RGBA 蒙版素材：正常混合，黑白双鱼完整呈现
+      ctx.save();
+      ctx.translate(x, y); ctx.rotate(rot * 2);
+      const d = r * 2.8;
+      ctx.drawImage(im, -d / 2, -d / 2, d, d);
+      ctx.restore();
+    } else drawTaijiBall(x, y, r, rot * 2);
+    return;
+  }
+  // 玩家主球：阴阳球贴图，比普通球大一档（贴图缺失走程序兜底）
+  const pim = phase === 1 ? ASSETS.get('yang') : ASSETS.get('yin');
+  if (pim) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(x, y); ctx.rotate(rot * 0.2);
+    const d = r * 3.0;
+    ctx.drawImage(pim, -d / 2, -d / 2, d, d);
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+    // 相位描边，保证辨识度
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+    ctx.strokeStyle = phase === 1 ? 'rgba(240,199,120,0.5)' : 'rgba(157,134,255,0.7)';
+    ctx.lineWidth = 1.2; ctx.stroke();
+    return;
+  }
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot * 0.2);
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+  if (phase === 1) {
+    ctx.fillStyle = '#fff3dc'; ctx.fill();
+    ctx.strokeStyle = 'rgba(240,199,120,0.45)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.32, 0, TAU);
+    ctx.fillStyle = '#14121e'; ctx.fill();
+  } else {
+    ctx.fillStyle = '#0b0916'; ctx.fill();
+    ctx.strokeStyle = 'rgba(157,134,255,0.65)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.32, 0, TAU);
+    ctx.fillStyle = '#f2eee4'; ctx.fill();
+  }
+  ctx.restore();
+}
+function drawOrbExtras(o) {
+  const col = o.phase === 1 ? '240,199,120' : '157,134,255';
+  if (o.type === 'waver') {
+    // 呼吸环
+    ctx.strokeStyle = 'rgba(' + col + ',' + (0.22 + 0.18 * Math.sin(t * 5 + o.wob)) + ')';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(o.x, o.y, o.r + 4, 0, TAU); ctx.stroke();
+  } else if (o.type === 'split') {
+    // 双环大球
+    ctx.strokeStyle = 'rgba(' + col + ',0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(o.x, o.y, o.r + 3.5, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = 'rgba(' + col + ',0.18)';
+    ctx.beginPath(); ctx.arc(o.x, o.y, o.r + 6.5, 0, TAU); ctx.stroke();
+  } else if (o.type === 'dual') {
+    // 异色卫星点 + 翻转前白闪
+    const oppCol = o.phase === 1 ? '157,134,255' : '240,199,120';
+    for (const s of [0, PI]) {
+      const a = o.wob * 1.6 + s;
+      ctx.fillStyle = 'rgba(' + oppCol + ',0.8)';
+      ctx.beginPath(); ctx.arc(o.x + Math.cos(a) * (o.r + 4), o.y + Math.sin(a) * (o.r + 4), 1.6, 0, TAU); ctx.fill();
+    }
+    if (o.flipT < 0.25) {
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.5 + 0.4 * Math.sin(t * 30)) + ')';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(o.x, o.y, o.r + 3, 0, TAU); ctx.stroke();
+    }
+  }
+}
+
+function render() {
+  ctx.fillStyle = '#040407';
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  if (shakeT > 0) {
+    const a = shakeAmp * shakeT * shakeT;
+    ctx.translate(rand(-a, a), rand(-a, a));
+  }
+  ctx.drawImage(bgCv, 0, 0, W, H);
+
+  // 飘雾层：三条不同深度的雾横向缓移
+  const mistIm = ASSETS.get('mist');
+  if (mistIm) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 3; i++) {
+      const mw = W * 1.15, mh = mw * 500 / 1600;
+      const speed = 7 + i * 5;
+      const mx = ((t * speed + i * W * 0.55) % (W + mw)) - mw;
+      const my = cy + (i - 1) * R * 0.52 - mh / 2;
+      ctx.globalAlpha = 0.045 + 0.02 * Math.sin(t * 0.3 + i * 2);
+      ctx.drawImage(mistIm, mx, my, mw, mh);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // 场地中央：缓慢流转的淡墨太极（RGBA 蒙版素材，正常混合）
+  const tjBg = ASSETS.get('taiji');
+  if (tjBg) {
+    ctx.save();
+    ctx.globalAlpha = 0.055;
+    ctx.translate(cx, cy); ctx.rotate(t * 0.1);
+    const tr0 = R * 1.6;
+    ctx.drawImage(tjBg, -tr0 / 2, -tr0 / 2, tr0, tr0);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.globalAlpha = 0.05;
+    drawTaijiBall(cx, cy, R * 0.6, t * 0.1);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  for (const m of motes) { ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, TAU); ctx.fill(); }
+
+  // 场外萤火：金紫双色微光在空区漂浮（ lighter 混合，呼吸明灭）
+  if (sideFxOn) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (const f of fireflies) {
+      const tw = f.base * (0.55 + 0.45 * Math.sin(f.ph * 2.2));
+      const gs = f.r * 3;
+      ctx.globalAlpha = tw;
+      ctx.drawImage(f.gold ? GLOW.gold : GLOW.violet, f.x - gs, f.y - gs, gs * 2, gs * 2);
+      ctx.globalAlpha = Math.min(tw * 1.8, 0.5);
+      ctx.fillStyle = f.gold ? '#ffe9bd' : '#d8ccff';
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 0.3, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  const phaseCol = player.phase === 1 ? '240,199,120' : '157,134,255';
+  // 云雷纹场地环（素材优先）
+  const ringIm = ASSETS.get('ring');
+  if (ringIm) {
+    const rd = (R + 3) * 2 / 0.92;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.55;
+    ctx.drawImage(ringIm, cx - rd / 2, cy - rd / 2, rd, rd);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+  if (taijiT > 0) {
+    const ra = t * 3;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(240,199,120,' + (0.45 + 0.2 * Math.sin(t * 6)) + ')';
+    ctx.beginPath(); ctx.arc(cx, cy, R - 3, ra, ra + PI); ctx.stroke();
+    ctx.strokeStyle = 'rgba(157,134,255,' + (0.45 + 0.2 * Math.cos(t * 6)) + ')';
+    ctx.beginPath(); ctx.arc(cx, cy, R - 3, ra + PI, ra + TAU); ctx.stroke();
+  } else {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(' + phaseCol + ',' + (0.2 + 0.08 * Math.sin(t * 2)) + ')';
+    ctx.beginPath(); ctx.arc(cx, cy, R - 1.5, 0, TAU); ctx.stroke();
+  }
+  const pbd = Math.hypot(player.x - cx, player.y - cy);
+  const warn = clamp((pbd - (R - 70)) / 70, 0, 1);
+  if (warn > 0 && state === ST.PLAY) {
+    const pa = Math.atan2(player.y - cy, player.x - cx);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255,110,90,' + (warn * (0.4 + 0.25 * Math.sin(t * 10))) + ')';
+    ctx.beginPath(); ctx.arc(cx, cy, R - 2, pa - 0.5, pa + 0.5); ctx.stroke();
+  }
+
+  ctx.globalCompositeOperation = 'lighter';
+  const yangIm = ASSETS.get('yang'), yinIm = ASSETS.get('yin');
+  for (const o of orbs) {
+    const gl = o.phase === 1 ? GLOW.gold : GLOW.violet;
+    const s = o.r * (o.phase === 0 ? 3.9 : 3.2) * (1 + 0.08 * Math.sin(o.wob));
+    ctx.drawImage(gl, o.x - s, o.y - s, s * 2, s * 2);
+    // 水墨贴图球体（加法混合，黑底自动隐形）
+    const im = o.phase === 1 ? yangIm : yinIm;
+    if (im) {
+      if (o.safeT > 0) ctx.globalAlpha = 0.45 + 0.25 * Math.sin(t * 24);
+      const d = o.r * 2.6;   // 贴图球核约占画面 77%
+      ctx.drawImage(im, o.x - d / 2, o.y - d / 2, d, d);
+      if (o.safeT > 0) ctx.globalAlpha = 1;
+    }
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  for (const o of orbs) {
+    // 贴图缺失时的程序兜底球体
+    if (!(o.phase === 1 ? yangIm : yinIm)) {
+      if (o.safeT > 0) ctx.globalAlpha = 0.45 + 0.25 * Math.sin(t * 24);   // 生成保护期：半透明闪烁
+      ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, TAU);
+      if (o.phase === 1) { ctx.fillStyle = '#fff3dc'; ctx.fill(); }
+      else {
+        ctx.fillStyle = '#0b0916'; ctx.fill();
+        ctx.strokeStyle = '#8f7bff'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      if (o.safeT > 0) ctx.globalAlpha = 1;
+    }
+    drawOrbExtras(o);
+  }
+
+  ctx.globalCompositeOperation = 'lighter';
+  const tr = player.trail;
+  for (let i = 0; i < tr.length; i++) {
+    const f = i / tr.length;
+    ctx.fillStyle = 'rgba(' + phaseCol + ',' + (f * 0.16) + ')';
+    ctx.beginPath(); ctx.arc(tr[i].x, tr[i].y, player.r * 0.7 * f, 0, TAU); ctx.fill();
+  }
+
+  for (const p of parts) {
+    ctx.globalAlpha = Math.max(p.life / p.max, 0);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+
+  // 太极触发的水墨涟漪
+  const rippleIm = ASSETS.get('ripple');
+  for (const rp of ripples) {
+    const f = rp.life / rp.max;
+    if (rippleIm) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = f * 0.55;
+      const d = rp.r * 2.4;
+      ctx.drawImage(rippleIm, rp.x - d / 2, rp.y - d / 2, d, d);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    } else {
+      ctx.strokeStyle = 'rgba(240,199,120,' + (0.5 * f) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, TAU); ctx.stroke();
+    }
+  }
+
+  // 得分浮字
+  ctx.textAlign = 'center';
+  ctx.font = '600 13px Georgia, serif';
+  for (const fl of floaters) {
+    ctx.globalAlpha = Math.max(fl.life / fl.max, 0);
+    ctx.fillStyle = fl.color;
+    ctx.fillText(fl.txt, fl.x, fl.y);
+  }
+  ctx.globalAlpha = 1;
+
+  // 汲取光轨：被吸收的能量流向玩家
+  if (streaks.length) {
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineWidth = 1.5;
+    for (const st of streaks) {
+      ctx.globalAlpha = (st.life / st.max) * 0.7;
+      ctx.strokeStyle = 'rgba(' + st.col + ',1)';
+      ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.lineTo(player.x, player.y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  const blink = invT > 0 ? 0.5 + 0.3 * Math.sin(t * 26) : 1;
+  const gs = player.r * 4.2;
+  ctx.globalCompositeOperation = 'lighter';
+  if (taijiT > 0) {
+    ctx.globalAlpha = blink;
+    ctx.drawImage(GLOW.gold, player.x - gs, player.y - gs, gs * 2, gs * 2);
+    ctx.drawImage(GLOW.violet, player.x - gs * 0.85, player.y - gs * 0.85, gs * 1.7, gs * 1.7);
+    ctx.globalAlpha = 1;
+  } else {
+    const gl = player.phase === 1 ? GLOW.gold : GLOW.violet;
+    ctx.globalAlpha = blink;
+    ctx.drawImage(gl, player.x - gs, player.y - gs, gs * 2, gs * 2);
+    ctx.globalAlpha = 1;
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  ctx.globalAlpha = blink;
+  drawPlayerBall(player.x, player.y, player.r, player.rot, player.phase);
+  ctx.globalAlpha = 1;
+
+  // 连击倍数：combo>=3 起显示在球的上方，让玩家看得见"保连击"
+  const mult = Math.min(1 + Math.floor(Math.max(combo - 1, 0) / 3), 5);
+  if (mult >= 2 && taijiT <= 0 && (state === ST.PLAY || state === ST.DYING)) {
+    const pulse = 1 + 0.12 * Math.sin(t * 8);
+    ctx.textAlign = 'center';
+    ctx.font = 'italic 700 ' + Math.round(13 * pulse) + 'px Georgia, serif';
+    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 6);
+    ctx.fillStyle = mult >= 4 ? '#ffe9bd' : '#f0c778';
+    ctx.fillText('×' + mult, player.x, player.y - player.r - 12);
+    ctx.globalAlpha = 1;
+  }
+
+  // 能量粒子环：8颗一圈、16颗两圈、24颗三圈
+  if (chi >= 8 && taijiT <= 0) {
+    const rings = chi >= 24 ? 3 : chi >= 16 ? 2 : 1;
+    for (let r = 0; r < rings; r++) {
+      const n = 14;
+      const ringR = player.r + 8 + r * 5;
+      const dir = r % 2 === 0 ? 1 : -1;
+      const sp = t * 4.5 * dir;
+      for (let i = 0; i < n; i++) {
+        const a = sp + i * TAU / n;
+        const px = player.x + Math.cos(a) * ringR;
+        const py = player.y + Math.sin(a) * ringR;
+        const pulse = 1 + Math.sin(t * 10 + i + r) * 0.4;
+        ctx.globalAlpha = 0.6 + Math.sin(t * 6 + i + r) * 0.3;
+        ctx.fillStyle = player.phase === 1 ? '#b09cff' : '#ffd68c';
+        ctx.beginPath(); ctx.arc(px, py, 1.8 * pulse, 0, TAU); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  if (state === ST.PLAY || state === ST.DYING) {
+    if (taijiT > 0) {
+      const ra = t * 6;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(240,199,120,0.85)';
+      ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 7, ra, ra + PI); ctx.stroke();
+      ctx.strokeStyle = 'rgba(157,134,255,0.85)';
+      ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 7, ra + PI, ra + TAU); ctx.stroke();
+    } else {
+      if (chi > 0) {
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 2.5;
+        const ringCol = player.phase === 1 ? '240,199,120' : '157,134,255';
+        const pulse = chi >= 8 ? 0.75 + 0.25 * Math.sin(t * 10) : 1;
+        ctx.strokeStyle = 'rgba(' + ringCol + ',' + (0.85 * pulse) + ')';
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.r + 6, -PI / 2, -PI / 2 + TAU * chi / 24);
+        ctx.stroke();
+        ctx.lineCap = 'butt';
+      }
+    }
+  }
+  if (ringPulseT > 0) {
+    const f = 1 - ringPulseT / 0.4;
+    ctx.strokeStyle = 'rgba(' + phaseCol + ',' + (0.5 * (1 - f)) + ')';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 6 + f * 60, 0, TAU); ctx.stroke();
+  }
+
+  // 残血暴走：最后一口气，球体外缠一圈搏命红光
+  if (lives === 1 && (state === ST.PLAY || state === ST.DYING)) {
+    ctx.strokeStyle = 'rgba(255,110,80,' + (0.28 + 0.18 * Math.sin(t * 6)) + ')';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(player.x, player.y, player.r + 10 + Math.sin(t * 6) * 1.5, 0, TAU); ctx.stroke();
+  }
+
+  // 阴阳双鱼收束入体：翻转瞬间，金紫双弧旋转内收没入球中
+  for (const fx of flipFx) {
+    const f = fx.life / fx.max;
+    const fr = player.r + 4 + f * 78;   // 半径从 ~94 收到球边
+    const rot = t * 11;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = f * 0.85;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(240,199,120,1)';
+    ctx.beginPath(); ctx.arc(player.x, player.y, fr, rot, rot + PI); ctx.stroke();
+    ctx.strokeStyle = 'rgba(157,134,255,1)';
+    ctx.beginPath(); ctx.arc(player.x, player.y, fr, rot + PI, rot + TAU); ctx.stroke();
+    // 双鱼的"鱼头"光点
+    ctx.fillStyle = 'rgba(240,199,120,0.9)';
+    ctx.beginPath(); ctx.arc(player.x + Math.cos(rot) * fr, player.y + Math.sin(rot) * fr, 2.6, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(157,134,255,0.9)';
+    ctx.beginPath(); ctx.arc(player.x + Math.cos(rot + PI) * fr, player.y + Math.sin(rot + PI) * fr, 2.6, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // 墨梅落瓣（太极模式期间）
+  const petIm = ASSETS.get('petals');
+  if (petIm && petals.length) {
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of petals) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, p.life / (p.max * 0.5)) * 0.55;
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.drawImage(petIm, p.f * 256, 0, 256, 256, -p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  ctx.restore();
+
+  if (flashT > 0) {
+    ctx.globalAlpha = Math.min(1, flashT) * 0.16;
+    ctx.fillStyle = flashColor;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ================= 流程 ================= */
+let toastTimer = 0;
+function showToast(txt, dur) {
+  elToast.textContent = txt;
+  elToast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => elToast.classList.remove('show'), (dur || 1.8) * 1000);
+}
+let sealTimer = 0;
+function showSeal(zh, en) {
+  elSealChar.textContent = zh;
+  elSealEn.textContent = en;
+  elSeal.classList.remove('show');
+  void elSeal.offsetWidth;
+  elSeal.classList.add('show');
+  clearTimeout(sealTimer);
+  sealTimer = setTimeout(() => elSeal.classList.remove('show'), 1750);
+}
+function updateLives() {
+  const ds = elLives.children;
+  for (let i = 0; i < 3; i++) ds[i].classList.toggle('off', i >= lives);
+}
+function judge(s) {
+  return s < 15 ? '入境未深' : s < 30 ? '初窥门径' : s < 60 ? '渐入佳境'
+    : s < 90 ? '守中抱一' : s < 120 ? '心气合一' : s < 180 ? '物我两忘'
+    : s < 240 ? '天人合一' : s < 300 ? '与道同游' : s < 360 ? '无极之境'
+    : s < 480 ? '乾坤在握' : s < 600 ? '万劫不侵' : '逍遥无极';
+}
+function judgeEn(s) {
+  return s < 15 ? 'a stranger to the way' : s < 30 ? 'first glimpse' : s < 60 ? 'finding flow'
+    : s < 90 ? 'holding the one' : s < 120 ? 'heart & breath as one' : s < 180 ? 'self forgotten'
+    : s < 240 ? 'one with the Tao' : s < 300 ? 'drifting with the Tao' : s < 360 ? 'entering the boundless'
+    : s < 480 ? 'heaven and earth in hand' : s < 600 ? 'untouched by ten thousand trials' : 'boundless and free';
+}
+function causeText() {
+  return deathCause === 'yang' ? 'burned by yang · 为阳所灼' : deathCause === 'yin' ? 'devoured by yin · 为阴所噬' : 'fell out of the circle · 坠出太极';
+}
+function refreshTitleBest() {
+  elTitleBest.textContent = best > 0 ? 'BEST　' + best.toFixed(1) + 's · ' + fmt(bestScore) : '';
+}
+
+function startGame() {
+  Sound.unlock();
+  t = 0; timescale = 1; hitstop = 0; shakeT = 0;
+  lives = 3; absorbs = 0; grazes = 0; combo = 0; comboT = 0;
+  score = 0;
+  chi = 0; taijiT = 0; taijiCount = 0; invT = 0;
+  phaseInt = 8; phaseT = 8; afterFlipT = 0; readyWarned = false; flipWarned = false; silentFlip = false;
+  arenaK = 1; R = baseR;
+  orbs = []; parts = []; queue = []; floaters = []; ripples = []; petals = []; streaks = [];
+  canPerfect = false; salvaged = false;
+  mileIdx = 0; firstYinDone = false; hintMove = false; hintDodge = false; hintTaiji = false; hintFlip = false;
+  hbT = 0; flashT = 0; ringPulseT = 0; bumpCd = 0; hudAcc = 0;
+  player.x = cx; player.y = cy; player.vx = 0; player.vy = 0;
+  player.phase = 1; player.rot = 0; player.animT = 0; player.trail = [];
+  if (isCoarse) input.has = false; else { input.tx = cx; input.ty = cy; input.has = true; }
+  resetDirector();
+  updateLives();
+  elHudTime.textContent = '0.0';
+  elHudScore.textContent = '0';
+  hide(elTitle); hide(elOver); hide(elPause);
+  elPauseBtn.classList.add('show');
+  elHud.classList.add('show');
+  state = ST.CD;
+  cdT = 2.0;
+  Sound.ambStart();
+}
+function cdUpdate(rdt) {
+  const prev = cdT;
+  cdT -= rdt;
+  const marks = [[1.4, 'INHALE · 吸'], [0.75, 'EXHALE · 呼'], [0.16, 'BEGIN · 始']];
+  for (const m of marks) {
+    if (prev > m[0] && cdT <= m[0]) { showToast(m[1], 0.6); Sound.tick(); }
+  }
+  if (cdT <= 0) state = ST.PLAY;
+}
+function gameOver() {
+  state = ST.OVER;
+  Sound.ambStop(); Sound.over(); vibrate([50, 80, 50]);
+  const time = t;
+  const isNew = time > best, isNewScore = score > bestScore;
+  if (isNew) { best = time; store.set('best', best); }
+  if (isNewScore) { bestScore = Math.round(score); store.set('bestScore', bestScore); }
+  gamesPlayed++; store.set('games', gamesPlayed);
+  elOverTime.textContent = time.toFixed(1);
+  elOverScore.textContent = 'SCORE ' + fmt(score);
+  elOverJudge.textContent = judge(time);
+  elOverJudgeEn.textContent = judgeEn(time);
+  elOverCause.textContent = causeText();
+  elOverStats.textContent = 'absorbed ' + absorbs + ' · grazed ' + grazes + ' · taiji ' + taijiCount;
+  elOverNew.style.display = (isNew || isNewScore) ? '' : 'none';
+  elOverNew.textContent = isNew ? 'NEW RECORD' : 'BEST SCORE';   // 时间破纪录才是"新纪录"，仅分数破纪录降级为"最高分"
+  elOverBest.textContent = 'BEST　' + best.toFixed(1) + 's · ' + fmt(bestScore);
+  // 惜败钩子：离下一枚印章只差 5 秒内 → 明晃晃的"再来一局"诱惑
+  let nextM = null;
+  for (const m of MILES) { if (m[0] > time) { nextM = m; break; } }
+  if (!nextM) { const n = Math.floor(Math.max(time - 600, 0) / 60) + 1; nextM = [600 + n * 60, '逍遥']; }
+  elOverNear.textContent = (nextM && nextM[0] - time <= 5)
+    ? '距【' + nextM[1] + '】只差 ' + (nextM[0] - time).toFixed(1) + 's — once more?'
+    : '';
+  // 随机语录，尽量避免连续重复
+  let qi;
+  do { qi = (Math.random() * QUOTES.length) | 0; } while (lastQuotes.includes(qi) && QUOTES.length > 5);
+  lastQuotes.push(qi);
+  if (lastQuotes.length > 5) lastQuotes.shift();
+  elQuoteEn.textContent = '“' + QUOTES[qi][0] + '”';
+  elQuoteCn.textContent = QUOTES[qi][1];
+  elPauseBtn.classList.remove('show');
+  elHud.classList.remove('show');
+  shareTxt = '☯ TAIJI BALANCE — I balanced Yin & Yang for ' + time.toFixed(1) + ' seconds (' + judgeEn(time) + '). How long can you last?';
+  show(elOver);
+}
+let pauseFrom = ST.PLAY;
+function pauseGame() {
+  if (state !== ST.PLAY && state !== ST.CD) return;   // 倒计时阶段切后台也要能暂停
+  pauseFrom = state;
+  state = ST.PAUSE;
+  show(elPause);
+  elPauseBtn.classList.remove('show');
+}
+function resumeGame() {
+  hide(elPause);
+  state = pauseFrom;
+  elPauseBtn.classList.add('show');
+}
+function quitToTitle() {
+  state = ST.TITLE;
+  hide(elPause); hide(elOver);
+  Sound.ambStop();
+  elPauseBtn.classList.remove('show');
+  elHud.classList.remove('show');
+  refreshTitleBest();
+  show(elTitle);
+}
+async function shareScore() {
+  let done = false;
+  // 1) 系统分享（移动端 / 支持的桌面浏览器）
+  if (navigator.share) {
+    try { await navigator.share({ text: shareTxt }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  // 2) 剪贴板 API（需要安全上下文）
+  if (navigator.clipboard && window.isSecureContext) {
+    try { await navigator.clipboard.writeText(shareTxt); done = true; } catch (e) {}
+  }
+  // 3) 传统 execCommand 兜底（非安全上下文也能用）
+  if (!done) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = shareTxt;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      (document.body || document.documentElement).appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, ta.value.length);
+      done = document.execCommand('copy');
+      ta.remove ? ta.remove() : ta.parentNode.removeChild(ta);
+    } catch (e) {}
+  }
+  // 4) 反馈：成功显示 COPIED，全部失败则把文案直接展示出来
+  if (done) {
+    elShareBtn.textContent = 'COPIED';
+    setTimeout(() => { elShareBtn.textContent = 'SHARE'; }, 1500);
+  } else {
+    showToast(shareTxt, 5);
+  }
+}
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+
+let lastTs = performance.now();
+function frame(ts) {
+  requestAnimationFrame(frame);
+  let rdt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  if (rdt > 0.06) rdt = 0.06;
+  const target = state === ST.DYING ? 0.16 : taijiT > 0 ? 0.85 : 1;
+  timescale += (target - timescale) * Math.min(1, 8 * rdt);
+  if (state === ST.CD) cdUpdate(rdt);
+  else if (state === ST.PLAY || state === ST.DYING) {
+    if (hitstop > 0) hitstop -= rdt;
+    else update(rdt * timescale);
+    if (state === ST.DYING) { dyingT -= rdt; if (dyingT <= 0) gameOver(); }
+  }
+  render();
+}
+
+/* ================= 场外萤火（圆外空区点缀） ================= */
+/* 空区矩形 = 未来广告挂载区域：宽屏在左右两侧，竖屏在上下两端 */
+function sideZones() {
+  const m = 26;   // 离圆边的安全距离
+  const zones = [
+    { x: 0, y: 0, w: cx - R - m, h: H },                 // 左
+    { x: cx + R + m, y: 0, w: W - (cx + R + m), h: H },  // 右
+    { x: 0, y: 0, w: W, h: cy - R - m },                 // 上
+    { x: 0, y: cy + R + m, w: W, h: H - (cy + R + m) }   // 下
+  ];
+  return zones.filter(z => z.w > 60 && z.h > 60);
+}
+function seedFireflies() {
+  fireflies.length = 0;
+  if (!sideFxOn) return;
+  for (const z of sideZones()) {
+    const n = clamp(Math.round(z.w * z.h / 26000), 2, 12);
+    for (let i = 0; i < n; i++) {
+      if (fireflies.length >= 44) return;
+      fireflies.push({
+        z, x: z.x + Math.random() * z.w, y: z.y + Math.random() * z.h,
+        r: rand(2.2, 5.2), gold: Math.random() < 0.55,
+        ph: rand(TAU), sw: rand(0.5, 1.3),
+        vx: rand(-5, 5), vy: rand(-8, -2),
+        base: rand(0.08, 0.18)
+      });
+    }
+  }
+}
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cx = W / 2; cy = H / 2;
+  baseR = Math.min(W, H) / 2 - Math.max(8, Math.min(W, H) * 0.02);
+  R = baseR * arenaK;
+  player.r = clamp(R * 0.052, 10, 16);
+  buildBg();
+  document.documentElement.style.setProperty('--dt', Math.max(6, (H - 2 * R) / 2) + 'px');
+  const d = Math.hypot(player.x - cx, player.y - cy);
+  if (d > R - player.r) {
+    const s = (R - player.r - 2) / (d || 1);
+    player.x = cx + (player.x - cx) * s;
+    player.y = cy + (player.y - cy) * s;
+  }
+  if (!motes.length) {
+    for (let i = 0; i < 24; i++) {
+      const a = rand(TAU), rr = Math.sqrt(Math.random()) * (R - 10);
+      motes.push({ x: cx + Math.cos(a) * rr, y: cy + Math.sin(a) * rr, r: rand(0.8, 2), a: rand(TAU), sp: rand(0.1, 0.5) });
+    }
+  }
+  seedFireflies();
+}
+window.addEventListener('resize', resize);
+
+elStartBtn.addEventListener('click', () => { Sound.ui(); startGame(); });
+elAgainBtn.addEventListener('click', () => { Sound.ui(); startGame(); });
+elResumeBtn.addEventListener('click', () => { Sound.ui(); resumeGame(); });
+elQuitBtn.addEventListener('click', () => { Sound.ui(); quitToTitle(); });
+elHomeBtn.addEventListener('click', () => { Sound.ui(); quitToTitle(); });
+elPauseBtn.addEventListener('click', pauseGame);
+elShareBtn.addEventListener('click', shareScore);
+elMuteBtn.addEventListener('click', () => {
+  muted = !muted;
+  store.set('mute', muted);
+  const inGame = state === ST.CD || state === ST.PLAY || state === ST.DYING || state === ST.PAUSE;
+  Sound.setMuted(muted, inGame);
+  elMuteBtn.textContent = muted ? 'SOUND · OFF' : 'SOUND · ON';
+  Sound.ui();
+});
+
+resize();
+updateLives();
+refreshTitleBest();
+elMuteBtn.textContent = muted ? 'SOUND · OFF' : 'SOUND · ON';
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

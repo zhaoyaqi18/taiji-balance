@@ -1,0 +1,9 @@
+{
+  "name": "taiji-balance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TAIJI BALANCE - a yin-yang survival arcade game",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}
