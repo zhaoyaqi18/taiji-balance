@@ -537,11 +537,11 @@ function ambientOrb() {
   spawnOrb(p.x, p.y, v.vx, v.vy, phase, undefined, type);
   if (phase === 0 && !firstYinDone) {
     firstYinDone = true;
-    if (gamesPlayed < 2) showToast('Same color absorbs · Opposite color wounds', 2.4);
+    if (gamesPlayed < 2) showToast('Same color absorbs · Opposite color wounds', 4.0);
   }
-  if (type === 'waver' && !seenWaver) { seenWaver = true; showToast('Some orbs breathe — fast, then slow. Feel their rhythm.', 2.4); }
-  if (type === 'split' && !seenSplit) { seenSplit = true; showToast('Big orbs split in two — beware the pieces.', 2.4); }
-  if (type === 'dual' && !seenDual)   { seenDual = true; showToast('This orb flips its own color. Trust nothing.', 2.6); }
+  if (type === 'waver' && !seenWaver) { seenWaver = true; showToast('Some orbs breathe — fast, then slow. Feel their rhythm.', 3.5); }
+  if (type === 'split' && !seenSplit) { seenSplit = true; showToast('Big orbs split in two — beware the pieces.', 3.5); }
+  if (type === 'dual' && !seenDual)   { seenDual = true; showToast('This orb flips its own color. Trust nothing.', 3.5); }
 }
 
 function patRing() {
@@ -598,7 +598,7 @@ function patTide() {
     queue.push({ at: t + i * 0.12, x: p.x, y: p.y, vx: v.vx, vy: v.vy, phase: ph, type: t > 340 && Math.random() < 0.2 ? 'waver' : 'norm' });
   }
   Sound.tide();
-  if (!seenTide) { seenTide = true; showToast('The tide rises — one color floods the circle.', 2.6); }
+  if (!seenTide) { seenTide = true; showToast('The tide rises — one color floods the circle.', 3.5); }
 }
 function resetDirector() { director = { nextWave: 13, lullUntil: 0, waveAt: -10, ambT: 0.8, tideAt: 312 }; }
 function directorUpdate(dt) {
@@ -694,7 +694,7 @@ function absorbOrb(o) {
   if (chi >= 8 && !readyWarned) {
     readyWarned = true;
     Sound.ready();
-    if (gamesPlayed < 2) showToast('Tap anywhere — enter TAIJI · untouchable', 2.2);
+    if (gamesPlayed < 2) showToast('Tap anywhere — enter TAIJI · untouchable', 3.5);
   }
 }
 function triggerTaiji() {
@@ -727,11 +727,11 @@ function hurt(cause, sx, sy, svx, svy) {
     burst(player.x, player.y, '#ffe9bd', 22, 180, 0.7);
     ripples.push({ x: player.x, y: player.y, r: player.r, life: 0.7, max: 0.7 });
     addFloater(player.x, player.y - 30, '以炁换命', '#ffe9bd');
-    showToast('以炁换命 · A life bought with spirit', 2.4);
+    showToast('以炁换命 · A life bought with spirit', 3.5);
     return;
   }
   lives--; updateLives();
-  if (lives === 1 && state !== ST.DYING) showToast('One breath left — every spark counts half again', 2.6);
+  if (lives === 1 && state !== ST.DYING) showToast('One breath left — every spark counts half again', 3.5);
   deathCause = cause;
   hitstop = 0.09; shakeT = 1; shakeAmp = 10; flashT = 1;
   flashColor = cause === 'yang' ? '#ffdf9e' : cause === 'yin' ? '#8f7bff' : '#ffffff';
@@ -789,7 +789,7 @@ function update(dt) {
   if (t > 300) {
     arenaK = clamp(1 - 0.03 * ((t - 300) / 60), 0.75, 1);
     R = baseR * arenaK;
-    if (!seenShrink) { seenShrink = true; showToast('The circle breathes in — space grows precious', 2.6); }
+    if (!seenShrink) { seenShrink = true; showToast('The circle breathes in — space grows precious', 3.5); }
   }
 
   // —— 移动：球追随指针（鼠标悬停 / 手指拖动）——
@@ -872,13 +872,13 @@ function update(dt) {
 
   // —— 新手引导：前两局循序提示 ——
   if (gamesPlayed < 1) {
-    if (!hintMove && t > 0.4) { hintMove = true; showToast('Move with your mouse — or your finger', 2.2); }
-    else if (!hintDodge && t > 2.6) { hintDodge = true; showToast('Absorb the SAME color — it feeds you', 2.2); }
-    else if (!hintTaiji && t > 5.0) { hintTaiji = true; showToast('Dodge the OPPOSITE color — it wounds you', 2.2); }
-    else if (!hintFlip && t > 7.4) { hintFlip = true; showToast('Your color flips without warning. Watch yourself.', 2.4); }
+    if (!hintMove && t > 0.4) { hintMove = true; showToast('Move with your mouse — or your finger', 3.0); }
+    else if (!hintDodge && t > 4.0) { hintDodge = true; showToast('Absorb the SAME color — it feeds you', 3.5); }
+    else if (!hintTaiji && t > 8.0) { hintTaiji = true; showToast('Dodge the OPPOSITE color — it wounds you', 3.5); }
+    else if (!hintFlip && t > 12.0) { hintFlip = true; showToast('Your color flips without warning. Watch yourself.', 4.0); }
   } else if (gamesPlayed < 2) {
-    if (!hintMove && t > 0.4) { hintMove = true; showToast('Same absorbs · Opposite wounds', 2.0); }
-    else if (!hintFlip && t > 3.2) { hintFlip = true; showToast('Flips come unannounced — stay ready', 2.0); }
+    if (!hintMove && t > 0.4) { hintMove = true; showToast('Same absorbs · Opposite wounds', 3.5); }
+    else if (!hintFlip && t > 3.2) { hintFlip = true; showToast('Flips come unannounced — stay ready', 3.5); }
   }
 
   directorUpdate(dt);
@@ -948,7 +948,7 @@ function update(dt) {
       addFloater(player.x + (o.x - player.x) * 0.7, player.y + (o.y - player.y) * 0.7, '+' + gpts, '#ffffff');
       Sound.graze();
       burst(player.x + (o.x - player.x) * 0.7, player.y + (o.y - player.y) * 0.7, '#ffffff', 3, 60, 0.25);
-      if (!seenGraze) { seenGraze = true; showToast('Close shave! +50 — risk has its rewards', 2.2); }
+      if (!seenGraze) { seenGraze = true; showToast('Close shave! +50 — risk has its rewards', 3.0); }
     }
   }
   for (let i = orbs.length - 1; i >= 0; i--) if (orbs[i].dead) orbs.splice(i, 1);
@@ -1648,16 +1648,15 @@ function quitToTitle() {
   show(elTitle);
 }
 async function shareScore() {
-  // 生成分享卡片
+  try {
   const blob = await generateShareCard();
   if (!blob) { showToast('Could not create share image', 2); return; }
   const file = new File([blob], 'TAIJI-BALANCE-score.jpg', { type: 'image/jpeg' });
-  try {
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'TAIJI BALANCE' });
-      return;
-    }
-  } catch (e) { if (e.name === 'AbortError') return; }
+  // 手机用系统分享，桌面直接下载
+  if (isCoarse && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file], title: 'TAIJI BALANCE' });
+    return;
+  }
   // 兜底：下载图片
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1665,6 +1664,7 @@ async function shareScore() {
   document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
   showToast('Image saved — share it with friends!', 2);
+  } catch(e) { if (e.name !== 'AbortError') showToast('Share card saved to downloads!', 2); console.error(e); }
 }
 
 async function generateShareCard() {
