@@ -1648,26 +1648,146 @@ function quitToTitle() {
   show(elTitle);
 }
 async function shareScore() {
-  const txt = '☯ TAIJI BALANCE — I survived ' + t.toFixed(1) + 's (' + judgeEn(t) + ') with ' + fmt(score) + ' points.\nCan you beat me? https://taijibalance.com';
+  // 生成分享卡片
+  const blob = await generateShareCard();
+  if (!blob) { showToast('Could not create share image', 2); return; }
+  const file = new File([blob], 'TAIJI-BALANCE-score.jpg', { type: 'image/jpeg' });
   try {
-    if (navigator.share) {
-      await navigator.share({ text: txt });
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'TAIJI BALANCE' });
       return;
     }
   } catch (e) { if (e.name === 'AbortError') return; }
-  // 兜底：复制到剪贴板
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(txt);
-    } else {
-      const ta = document.createElement('textarea');
-      ta.value = txt; ta.setAttribute('readonly', '');
-      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
-      document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); ta.remove();
-    }
-    showToast('Link + score copied — share it!', 1.8);
-  } catch (e) { showToast(txt, 5); }
+  // 兜底：下载图片
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'TAIJI-BALANCE-score.jpg';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  showToast('Image saved — share it with friends!', 2);
+}
+
+async function generateShareCard() {
+  const CW = 540, CH = 960;
+  const c = document.createElement('canvas');
+  c.width = CW; c.height = CH;
+  const x = c.getContext('2d');
+
+  // 背景
+  const bg = ASSETS.get('bgMain');
+  if (bg) {
+    const s = Math.max(CW / bg.width, CH / bg.height);
+    x.drawImage(bg, (CW - bg.width * s) / 2, (CH - bg.height * s) / 2, bg.width * s, bg.height * s);
+  } else {
+    const g = x.createRadialGradient(CW / 2, CH / 2, 0, CW / 2, CH / 2, CW * 0.7);
+    g.addColorStop(0, '#0e0d17'); g.addColorStop(1, '#050508');
+    x.fillStyle = g; x.fillRect(0, 0, CW, CH);
+  }
+  // 纸纹理压暗
+  const bp = ASSETS.get('bgPaper');
+  if (bp) { x.globalAlpha = 0.04;
+    for (let px = 0; px < CW; px += 256) for (let py = 0; py < CH; py += 256) x.drawImage(bp, px, py, 256, 256);
+    x.globalAlpha = 1; }
+
+  // 暗角
+  const v = x.createRadialGradient(CW / 2, CH / 2, CW * 0.2, CW / 2, CH / 2, CW * 0.8);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.6)');
+  x.fillStyle = v; x.fillRect(0, 0, CW, CH);
+
+  // 太极水印（中央偏下，极淡）
+  const tj = ASSETS.get('taiji');
+  if (tj) {
+    x.save(); x.globalAlpha = 0.045;
+    x.translate(CW / 2, CH * 0.52); x.rotate(Math.PI / 4);
+    const td = CH * 0.5; x.drawImage(tj, -td / 2, -td / 2, td, td);
+    x.restore();
+  }
+
+  // === 头部 ===
+  // 小太极图标
+  const tjSm = ASSETS.get('taiji');
+  if (tjSm) {
+    x.save(); x.globalAlpha = 0.7;
+    x.translate(CW / 2, 88); const d = 36;
+    x.drawImage(tjSm, -d / 2, -d / 2, d, d);
+    x.restore();
+  }
+  x.textAlign = 'center';
+  x.font = '600 26px Georgia, "Times New Roman", serif';
+  x.fillStyle = '#f0c778'; x.shadowColor = 'rgba(240,199,120,0.3)'; x.shadowBlur = 16;
+  x.fillText('TAIJI BALANCE', CW / 2, 132);
+  x.shadowBlur = 0;
+  x.font = '14px "Kaiti SC","STKaiti","KaiTi",serif';
+  x.fillStyle = 'rgba(240,199,120,0.55)';
+  x.fillText('阴阳平衡球', CW / 2, 155);
+
+  // 毛笔分割线
+  const bd = ASSETS.get('ring'); // 复用云雷纹环
+  if (bd) { x.save(); x.globalAlpha = 0.12; x.drawImage(bd, CW / 2 - 140, 170, 280, 28); x.restore(); }
+
+  // === 成绩 ===
+  const s = t.toFixed(1);
+  x.font = '300 72px Georgia, "Times New Roman", serif';
+  x.fillStyle = '#f4f1e8'; x.shadowColor = 'rgba(240,199,120,0.25)'; x.shadowBlur = 24;
+  x.fillText(s + '', CW / 2, 270);
+  x.shadowBlur = 0;
+  x.font = '11px Georgia, serif'; x.fillStyle = 'rgba(244,241,232,0.5)';
+  x.fillText('SECONDS SURVIVED', CW / 2, 293);
+  
+  // 分数
+  x.font = '600 18px Georgia, serif';
+  x.fillStyle = 'rgba(240,199,120,0.85)';
+  x.fillText('SCORE  ' + fmt(score), CW / 2, 325);
+
+  // === 印章 ===
+  const mileIdxForCard = Math.min(mileIdx, MILES.length - 1);
+  const sealChar = mileIdxForCard > 0 ? MILES[mileIdxForCard - 1][1] : '入境';
+  const sealEn   = mileIdxForCard > 0 ? MILES[mileIdxForCard - 1][2] : 'CALM';
+  const sealIm = ASSETS.get('ring'); // 复用云雷纹环作为印章底框
+  const sealY = 400;
+  if (sealIm) {
+    x.save(); x.globalAlpha = 0.15; x.drawImage(sealIm, CW / 2 - 50, sealY - 12, 100, 28); x.restore();
+  }
+  x.font = '600 34px "Kaiti SC","STKaiti","KaiTi",serif';
+  x.fillStyle = '#c14b32'; x.shadowColor = 'rgba(193,75,50,0.4)'; x.shadowBlur = 10;
+  x.fillText(sealChar, CW / 2, sealY + 34);
+  x.shadowBlur = 0;
+  x.font = '11px Georgia, serif'; x.fillStyle = 'rgba(240,199,120,0.7)';
+  x.fillText(sealEn, CW / 2, sealY + 58);
+
+  // === 禅语 ===
+  let qi;
+  do { qi = (Math.random() * QUOTES.length) | 0; } while (lastQuotes.includes(qi) && QUOTES.length > 5);
+  if (QUOTES[qi]) {
+    x.font = 'italic 15px Georgia, serif';
+    x.fillStyle = 'rgba(244,241,232,0.8)'; x.shadowColor = 'rgba(240,199,120,0.12)'; x.shadowBlur = 12;
+    wrapText(x, '“' + QUOTES[qi][0] + '”', CW / 2, 540, CW - 80, 22);
+    x.shadowBlur = 0;
+    x.font = '11px "Kaiti SC","STKaiti","KaiTi",serif';
+    x.fillStyle = 'rgba(244,241,232,0.4)';
+    wrapText(x, '—— ' + QUOTES[qi][1], CW / 2 - 10, 600, CW - 80, 18);
+  }
+
+  // === 底部 ===
+  const bdIm = ASSETS.get('ring');
+  if (bdIm) { x.save(); x.globalAlpha = 0.08; x.drawImage(bdIm, CW / 2 - 80, CH - 140, 160, 20); x.restore(); }
+  x.font = '11px Georgia, serif';
+  x.fillStyle = 'rgba(240,199,120,0.4)';
+  x.fillText('Play at taijibalance.com', CW / 2, CH - 100);
+
+  return new Promise(res => c.toBlob(b => res(b), 'image/jpeg', 0.92));
+}
+
+function wrapText(ctx, txt, cx, y, maxW, lh) {
+  const lines = [];
+  let line = '';
+  for (const w of txt.split(' ')) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  lines.forEach((l, i) => { ctx.textAlign = 'center'; ctx.fillText(l, cx, y + i * lh); });
 }
 
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
