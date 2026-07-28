@@ -1648,38 +1648,26 @@ function quitToTitle() {
   show(elTitle);
 }
 async function shareScore() {
+  const txt = '☯ TAIJI BALANCE — I survived ' + t.toFixed(1) + 's (' + judgeEn(t) + ') with ' + fmt(score) + ' points.\nCan you beat me? https://taijibalance.com';
   try {
-  let done = false;
-  // 1) 系统分享（移动端 / 支持的桌面浏览器）
-  if (navigator.share) {
-    try { await navigator.share({ text: shareTxt }); return; }
-    catch (e) { if (e && e.name === 'AbortError') return; }
-  }
-  // 2) 剪贴板 API（需要安全上下文）
-  if (navigator.clipboard && window.isSecureContext) {
-    try { await navigator.clipboard.writeText(shareTxt); done = true; } catch (e) {}
-  }
-  // 3) 传统 execCommand 兜底（非安全上下文也能用）
-  if (!done) {
-    try {
+    if (navigator.share) {
+      await navigator.share({ text: txt });
+      return;
+    }
+  } catch (e) { if (e.name === 'AbortError') return; }
+  // 兜底：复制到剪贴板
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(txt);
+    } else {
       const ta = document.createElement('textarea');
-      ta.value = shareTxt;
-      ta.setAttribute('readonly', '');
+      ta.value = txt; ta.setAttribute('readonly', '');
       ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
-      (document.body || document.documentElement).appendChild(ta);
-      ta.select(); ta.setSelectionRange(0, ta.value.length);
-      done = document.execCommand('copy');
-      ta.remove ? ta.remove() : ta.parentNode.removeChild(ta);
-    } catch (e) {}
-  }
-  // 4) 反馈：成功显示 COPIED，全部失败则把文案直接展示出来
-  if (done) {
-    elShareBtn.textContent = 'COPIED';
-    setTimeout(() => { elShareBtn.textContent = 'SHARE'; }, 1500);
-  } else {
-    showToast(shareTxt, 5);
-  }
-  } catch (e) { showToast(shareTxt, 5); }
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    showToast('Link + score copied — share it!', 1.8);
+  } catch (e) { showToast(txt, 5); }
 }
 
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
