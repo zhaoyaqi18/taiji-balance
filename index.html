@@ -1648,6 +1648,7 @@ function quitToTitle() {
   show(elTitle);
 }
 async function shareScore() {
+  try {
   let done = false;
   // 1) 系统分享（移动端 / 支持的桌面浏览器）
   if (navigator.share) {
@@ -1678,6 +1679,7 @@ async function shareScore() {
   } else {
     showToast(shareTxt, 5);
   }
+  } catch (e) { showToast(shareTxt, 5); }
 }
 
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
